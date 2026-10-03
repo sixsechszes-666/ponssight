@@ -1,0 +1,298 @@
+/* The frame: the bar, the rail, the page spine, the footer, the toast.
+
+   Navigation lives in a left rail from 1572px up and collapses back into a
+   horizontal strip under the bar below that. Two shapes for one nav, because
+   eleven sections run out of room on one line long before they run out of
+   room on a screen, and a strip that has to scroll to reach the last tab is a
+   strip where the last tab is effectively gone. That breakpoint is derived
+   rather than picked; the arithmetic is at the rail block below.
+
+   The rail is NOT inside `.topbar`, and that is load-bearing rather than
+   tidiness: `.topbar` carries a `backdrop-filter`, and a filtered element
+   becomes the containing block for any `position:fixed` descendant, so a rail
+   inside it would position itself against a 48px-tall bar instead of against
+   the window. */
+
+.topbar{
+  position:sticky;top:0;z-index:40;
+  height:var(--bar-h);
+  /* The table scrolls under this, so it has to be translucent and blurred
+     rather than opaque: a solid bar reads as a wall the content disappears
+     behind, a blurred one reads as glass it passes beneath. */
+  background:var(--bg-blur);
+  backdrop-filter:blur(14px) saturate(140%);
+  -webkit-backdrop-filter:blur(14px) saturate(140%);
+  border-bottom:1px solid var(--line);
+}
+
+/* The spine. Everything on the page lines up on this width, including the
+   footer and the tables, so the bar's contents sit on the same rails. */
+.bwrap{
+  max-width:var(--page-max);
+  height:100%;
+  margin:0 auto;
+  padding:0 var(--s5);
+  display:flex;
+  align-items:center;
+  /* Identity at one end, the state of the feed at the other, and the middle
+     left empty. It used to hold the eleven tabs, which is why the gap here is
+     16px rather than the 24 the padding would suggest: a smaller gap bought
+     the strip a few more pixels before it had to scroll. That constraint is
+     gone with the tabs, and the value is left as it is because it is what the
+     brand and the badge group were tuned against. */
+  gap:var(--s4);
+}
+
+/* ------------------------------------------------------------- identity */
+.brand{
+  display:flex;align-items:center;gap:var(--s2);
+  font-size:var(--t-md);font-weight:600;
+  letter-spacing:var(--track-display);
+  color:var(--txt);
+  border-bottom:none;
+  white-space:nowrap;
+}
+/* Two-tone wordmark: the product name in full white, the rest stepped back.
+   Cheaper than a logo and it survives being 12px wide on a phone. */
+.brand b{font-weight:600;color:var(--dim)}
+.brand:hover b{color:var(--txt-2)}
+
+/* The mark is a solid white square, the only filled shape in the chrome. */
+.mark{
+  width:8px;height:8px;border-radius:2px;
+  background:var(--txt);flex:none;
+}
+
+/* ------------------------------------------------------------------ tabs */
+/* One nav in two shapes. The horizontal one is what this always was: the
+   strip scrolls rather than squeezing, because a button does not clip its own
+   label, so a tab narrowed past its text lets the text spill and two labels
+   overlap - which reads as a rendering fault rather than as a bar that ran out
+   of room. `flex:none` keeps every tab at its natural width and puts the
+   overflow here, where a swipe reaches the tab that is off the edge. The
+   scrollbar is hidden because a visible one under a blurred sticky band is a
+   second border.
+
+   Both shapes are described below; which one applies is decided by the same
+   1572px the chrome height is. */
+.tabs{
+  display:flex;align-items:center;gap:var(--s1);min-width:0;
+  overflow-x:auto;scrollbar-width:none;
+}
+.tabs::-webkit-scrollbar{display:none}
+
+.tab{
+  appearance:none;background:none;border:none;cursor:pointer;
+  flex:none;
+  font:500 var(--t-sm)/1 var(--sans);
+  color:var(--dim);
+  padding:var(--s2) var(--s2);
+  /* The active tab is a white rule, not a white fill or a green one. Green is
+     money on this page; spending it on navigation is what made the old sheet
+     ambiguous. The transparent border reserves the space so the label does not
+     shift a pixel when the tab becomes active - and which side that border is
+     on is the one thing the two shapes disagree about. */
+  border-bottom:2px solid transparent;
+  border-radius:var(--r-sm) var(--r-sm) 0 0;
+  transition:color var(--dur-1) var(--ease),border-color var(--dur-1) var(--ease),
+             background-color var(--dur-1) var(--ease);
+  white-space:nowrap;
+}
+.tab:hover{color:var(--txt-2);background:var(--wash)}
+.tab.on{color:var(--txt);border-bottom-color:var(--txt)}
+
+/* --------------------------------------------------------------- the rail */
+/* From 1572px the strip becomes a column down the left edge, fixed so it does
+   not scroll away, and the page is padded left by exactly its width so the
+   spine keeps centring on what is left. That padding is the whole trick: the
+   page cap stays 1400, so the rail is paid for out of the slack beside it
+   rather than out of the table.
+
+   1572 is where that slack runs out, and it is derived. The widest table on
+   the page needs 1351px of content (tokens.css, `--page-max`), the page's own
+   gutters are 2 x 24, so the page has to be 1399 wide, so the window has to be
+   1399 + 172 = 1571 before the rail costs the table nothing. Below that it
+   takes width the table was using: at 1440, measured, the page drops to 1268
+   and the table's box to 1218 against the 1331 it needs, which puts the last
+   column of the default tab off the right edge. This app priced that trade
+   twice already and refused it both times - `--page-max` does not grow for
+   this reason, and table.css:253 settles a 1453px table in a 1352px box by
+   tightening the gutter: "a table that has to be scrolled sideways to read a
+   column that was already there is worse than a tight gutter". A rail that
+   cuts a column is that trade with a worse result, so the rail waits until it
+   is free and the strip holds the nav below it. */
+@media (min-width:1572px){
+  body{padding-left:var(--rail-w)}
+
+  .tabs{
+    position:fixed;left:0;top:var(--bar-h);z-index:30;
+    width:var(--rail-w);height:calc(100vh - var(--bar-h));
+    flex-direction:column;align-items:stretch;gap:0;
+    /* Vertical scrolling is on because eleven sections at their touch height
+       do not fit a short window; horizontal is off because a rail has no
+       second dimension and the hidden scrollbar above would hide a fault. */
+    overflow-x:visible;overflow-y:auto;
+    padding:var(--s2) var(--s2) var(--s4);
+    background:var(--bg-1);
+    border-right:1px solid var(--line-2);
+    scrollbar-width:thin;
+  }
+
+  .tab{
+    display:block;width:100%;text-align:left;
+    padding:var(--s2) var(--s3);
+    /* The rule moves to the leading edge, where it points at the content the
+       tab selects rather than at the tab below it. */
+    border-bottom:none;
+    border-left:2px solid transparent;
+    border-radius:0 var(--r-sm) var(--r-sm) 0;
+  }
+  .tab.on{
+    color:var(--txt);
+    border-left-color:var(--txt);
+    background:var(--bg-2);
+  }
+
+  /* The group rule, hung off the attribute the markup already carries rather
+     than off a class or a position. Above it are the four feeds, which are
+     about the market as a whole; below it is everything that is about one
+     specific account, someone else's or your own. A separator keyed to
+     `data-tab` follows a tab that is renamed and does not move when one is
+     inserted, which an `nth-child` would. */
+  .tab[data-tab="handles"]{
+    margin-top:var(--s2);
+    padding-top:var(--s3);
+    border-top:1px solid var(--line);
+  }
+}
+
+/* The strip, while there is no rail to be. Sticky under the bar rather than
+   inside it, which is where it used to live: the bar cannot hold eleven
+   sections and the state of the feed on one line at any width this app is
+   opened at, and pretending otherwise is what made the tabs overlap at 1280. */
+@media (max-width:1571px){
+  .tabs{
+    position:sticky;top:var(--bar-h);z-index:35;
+    height:var(--tab-h);
+    /* The spine, which `.bwrap` used to hand this strip for free while the
+       tabs were inside the bar. Without it the strip becomes the one band on
+       the page that starts at the window edge. */
+    max-width:var(--page-max);
+    margin:0 auto;
+    padding:0 var(--s5);
+    /* Opaque-ish and blurred, because the table scrolls underneath it and a
+       transparent band would print rows through the tab labels. */
+    background:var(--bg-blur);
+    backdrop-filter:blur(14px) saturate(140%);
+    -webkit-backdrop-filter:blur(14px) saturate(140%);
+    border-bottom:1px solid var(--line);
+  }
+}
+
+/* ------------------------------------------------- the right-hand corner */
+.status{display:flex;align-items:center;gap:var(--s2);flex:none}
+#poll-ctl{display:flex;align-items:center;gap:var(--s1);margin-left:var(--s1)}
+
+/* ---------------------------------------------------------------- page */
+.page{
+  max-width:var(--page-max);
+  margin:0 auto;
+  /* The horizontal padding stays at 24 so the spine keeps matching `.bwrap`
+     above it; only the vertical ends come in, which is where the width was
+     being spent on air rather than on rows. */
+  padding:var(--s5) var(--s5) var(--s7);
+  display:flex;flex-direction:column;gap:var(--s4);
+}
+/* One panel is visible at a time. The fade is short enough to read as a
+   redraw rather than a transition. */
+.page > section{display:flex;flex-direction:column;gap:var(--s3);min-width:0}
+.page > section[hidden]{display:none !important}
+@keyframes panel-in{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
+.page > section:not([hidden]){animation:panel-in var(--dur-2) var(--ease)}
+
+/* --------------------------------------------------------------- the dock */
+/* The coin card stops being an overlay and becomes a right-hand column when
+   the window can hold it without narrowing a single column of any table.
+
+   The number is derived rather than picked. Docked, the page is
+   `--page-max + --dock-w + --s5` = 1904 wide, and the content inside it comes
+   to 1376 once the two gutters and the dock's own column are taken out - the
+   widest table on the page needs 1351, so every table still fits with width
+   to spare. Bar and page both stay centred on the area beside the rail, so
+   the spine keeps matching. Add the rail and the minimum gutter at each end
+   and the smallest window that holds all of that is 2124.
+
+   Below it the card goes back to being the overlay it is today, and that is
+   the deliberate half of the rule: a dock that has to scroll the table
+   sideways to exist is worse than no dock, because the panel opened to read
+   one token has just hidden three columns of the list it was opened from. */
+@media (min-width:2124px){
+  body:has(#coin:not([hidden])) .page{
+    max-width:calc(var(--page-max) + var(--dock-w) + var(--s5));
+    padding-right:calc(var(--dock-w) + var(--s5));
+  }
+  /* The bar widens with it. Left behind at 1400, the brand and the table under
+     it stop sharing a spine the moment a token is opened. */
+  body:has(#coin:not([hidden])) .bwrap{
+    max-width:calc(var(--page-max) + var(--dock-w) + var(--s5));
+  }
+}
+
+/* --------------------------------------------------------------- footer */
+#foot{
+  margin-top:var(--s4);
+  padding-top:var(--s4);
+  border-top:1px solid var(--line);
+  font-family:var(--mono);font-size:var(--t-micro);
+  letter-spacing:.06em;color:var(--dim-2);
+  word-break:break-word;
+}
+
+/* ---------------------------------------------------------------- toast */
+/* Hidden by default and shown by the script setting display, so a toast that
+   never fires costs nothing. Fixed to the bottom centre: out of the way of
+   the bar's badges and of the table's own controls.
+
+   It centres on the window, so it has to be told about the rail or it comes
+   out 86px left of the spine it is supposed to belong to. `--rail-w` is 0
+   below 1572, where there is no rail, so the offset is one declaration rather
+   than two. */
+#toast{
+  display:none;
+  position:fixed;left:calc(50% + var(--rail-w)/2);bottom:var(--s5);z-index:60;
+  transform:translateX(-50%);
+  max-width:min(560px,calc(100vw - var(--s6)));
+  padding:var(--s3) var(--s4);
+  background:var(--bg-1);
+  border:1px solid var(--line-2);
+  border-radius:var(--r-lg);
+  box-shadow:var(--shadow-pop);
+  font-size:var(--t-sm);color:var(--txt);
+  animation:panel-in var(--dur-2) var(--ease);
+}
+#toast.err{border-color:var(--neg-ln);background:var(--neg-bg);color:var(--neg)}
+#toast.ok{border-color:var(--pos-ln);background:var(--pos-bg);color:var(--pos)}
+
+/* ------------------------------------------------------------ narrow */
+/* Below this the badges and the tabs cannot share a line, and the badges are
+   the half that can go: the block height and the latency are read when
+   something looks wrong, and the two that stay - that the feed is live and the
+   wallet button - are the two the bar exists to answer.
+
+   This used to be 1300: while the tabs lived in the bar, the strip ran out of
+   room at a 1280 window. The tabs are not in the bar any more, so
+   what the bar runs out of room for is now its own contents, and that happens
+   a great deal later. 760 is the width at which brand, wallet and the live
+   badge still fit on one line with the bar's own padding; it is checked
+   against the 400px screenshot rather than trusted. */
+@media (max-width:760px){
+  .status .badge{display:none}
+  .status .badge.ok,.status #w-open{display:inline-flex}
+}
+@media (max-width:900px){
+  .bwrap{padding:0 var(--s4)}
+  .page{padding:var(--s5) var(--s4) var(--s7)}
+}
+@media (max-width:560px){
+  .brand b{display:none}
+}

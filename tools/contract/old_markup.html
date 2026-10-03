@@ -1,0 +1,427 @@
+</head>
+<body>
+<header>
+  <div class="row">
+    <h1>PONS <span>LAUNCHER</span></h1>
+    <span class="badge ok" id="b-live">live</span>
+    <span class="badge">block <b id="b-block">-</b></span>
+    <span class="badge">1h <b id="b-1h">-</b></span>
+    <span class="badge">24h <b id="b-24h">-</b></span>
+    <span class="badge">indexed <b id="b-total">-</b></span>
+    <span class="badge">ETH <b id="b-eth">-</b></span>
+    <span class="grow"></span>
+    <span class="badge go" id="b-wallet" data-goto="wallet"
+          title="open the wallet tab">wallet <b id="b-wallet-v">-</b></span>
+    <span class="badge" id="b-lat">-</span>
+  </div>
+</header>
+
+<nav class="tabs">
+  <button class="tab" data-tab="launches">Launches</button>
+  <button class="tab" data-tab="volume">Volume</button>
+  <button class="tab" data-tab="sniped">Sniped</button>
+  <button class="tab" data-tab="snipers">Snipers</button>
+  <button class="tab" data-tab="copy">Copy</button>
+  <button class="tab" data-tab="wallet">Wallet</button>
+  <span class="grow"></span>
+  <span class="inline" id="poll-ctl">
+    <span class="hint">auto</span>
+    <select id="every" title="how often the active tab re-reads the API">
+      <option value="2000">2s</option>
+      <option value="3000" selected>3s</option>
+      <option value="5000">5s</option>
+      <option value="10000">10s</option>
+      <option value="0">paused</option>
+    </select>
+    <button id="refresh">refresh now</button>
+  </span>
+</nav>
+
+<!-- ------------------------------------------------------------- launches -->
+<section id="p-launches" data-panel="launches">
+  <div class="ctl">
+    <input type="search" id="q" placeholder="search name / symbol / address">
+    <select id="sort">
+      <option value="newest">Newest</option>
+      <option value="oldest">Oldest</option>
+      <option value="mcap">Market cap</option>
+      <option value="progress">Graduation progress</option>
+      <option value="volume">Volume</option>
+      <option value="snipe">Snipe score</option>
+    </select>
+    <select id="quote">
+      <option value="">All pairs</option>
+      <option value="ETH">ETH</option>
+      <option value="USDG">USDG</option>
+    </select>
+    <label class="chk"><input type="checkbox" id="hidegrad"> hide graduated</label>
+    <label class="chk"><input type="checkbox" id="fresh"> last 30m only</label>
+    <span class="grow"></span>
+    <span class="badge" id="l-count">-</span>
+  </div>
+  <div class="tw">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:34px">#</th>
+          <th data-sort="newest">Token</th>
+          <th data-sort="oldest" style="width:74px">Age</th>
+          <th style="width:62px">Pair</th>
+          <th data-sort="snipe" style="width:78px">Snipe</th>
+          <th data-sort="volume" style="width:96px">Volume</th>
+          <th data-sort="progress" style="width:118px">Graduation</th>
+          <th data-sort="mcap" style="width:100px">MCap</th>
+          <th style="width:98px">MCap USD</th>
+          <th style="width:150px">Links</th>
+          <th style="width:92px">Deployer</th>
+        </tr>
+      </thead>
+      <tbody id="tb"></tbody>
+    </table>
+  </div>
+  <div class="empty" id="l-empty" hidden>no launches match</div>
+</section>
+
+<!-- --------------------------------------------------------------- volume -->
+<section id="p-volume" data-panel="volume" hidden>
+  <div class="ctl">
+    <span class="hint">window</span>
+    <select id="v-window">
+      <option value="5m">5m</option>
+      <option value="1h" selected>1h</option>
+      <option value="6h">6h</option>
+      <option value="24h">24h</option>
+      <option value="all">all</option>
+    </select>
+    <select id="v-sort">
+      <option value="volume">by volume</option>
+      <option value="buys">by buys</option>
+      <option value="sells">by sells</option>
+      <option value="net">by net quote</option>
+      <option value="newest">by newest</option>
+    </select>
+    <input type="search" id="v-q" placeholder="search name / symbol / address">
+    <select id="v-quote">
+      <option value="">All pairs</option>
+      <option value="ETH">ETH</option>
+      <option value="USDG">USDG</option>
+    </select>
+    <label class="chk"><input type="checkbox" id="v-hidegrad"> hide graduated</label>
+    <span class="grow"></span>
+    <span class="badge" id="v-count">-</span>
+  </div>
+  <div class="stats" id="v-summary"></div>
+  <div class="tw">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:34px">#</th>
+          <th>Token</th>
+          <th style="width:74px">Age</th>
+          <th style="width:62px">Pair</th>
+          <th style="width:96px">Volume USD</th>
+          <th style="width:100px">Volume</th>
+          <th style="width:62px">Buys</th>
+          <th style="width:62px">Sells</th>
+          <th style="width:92px">Net</th>
+          <th style="width:66px">Buyers</th>
+          <th style="width:78px">Last</th>
+          <th style="width:98px">MCap USD</th>
+          <th style="width:118px">Graduation</th>
+          <th style="width:78px">Snipe</th>
+          <th style="width:60px"></th>
+        </tr>
+      </thead>
+      <tbody id="v-tb"></tbody>
+    </table>
+  </div>
+  <div class="empty" id="v-empty" hidden>no trades in this window</div>
+</section>
+
+<!-- ---------------------------------------------------------------- sniped -->
+<section id="p-sniped" data-panel="sniped" hidden>
+  <div class="ctl">
+    <span class="hint">labels</span>
+    <span class="lblchk">
+      <label class="chk"><input type="checkbox" id="sn-lb-bundled" checked> bundled</label>
+      <label class="chk"><input type="checkbox" id="sn-lb-sniped" checked> sniped</label>
+      <label class="chk"><input type="checkbox" id="sn-lb-early"> early</label>
+    </span>
+    <select id="sn-sort">
+      <option value="score">by snipe score</option>
+      <option value="delta">by delta blocks</option>
+      <option value="volume">by volume</option>
+      <option value="newest">by newest</option>
+    </select>
+    <label class="chk"><input type="checkbox" id="sn-bots"> only bots</label>
+    <label class="chk">max delta
+      <input type="number" id="sn-maxdelta" min="0" step="1" placeholder="any"
+             style="width:76px"></label>
+    <input type="search" id="sn-q" placeholder="search name / symbol / address">
+    <select id="sn-quote">
+      <option value="">All pairs</option>
+      <option value="ETH">ETH</option>
+      <option value="USDG">USDG</option>
+    </select>
+    <span class="grow"></span>
+    <span class="badge" id="sn-count">-</span>
+  </div>
+  <div class="stats" id="sn-stats"></div>
+  <div class="box" id="sn-dist">
+    <h2>snipe label distribution - every indexed launch, not just the rows below</h2>
+    <div class="stack" id="sn-stack"><i style="width:100%;background:#1d2632"></i></div>
+    <div class="legend" id="sn-legend"></div>
+  </div>
+  <div class="tw">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:34px">#</th>
+          <th>Token</th>
+          <th style="width:74px">Age</th>
+          <th style="width:72px">Delta</th>
+          <th style="width:180px">First buyer</th>
+          <th style="width:100px">First buy</th>
+          <th style="width:74px">Share</th>
+          <th style="width:72px">Early</th>
+          <th style="width:74px">Hits</th>
+          <th style="width:56px">Bot</th>
+          <th style="width:96px">Volume</th>
+          <th style="width:60px"></th>
+        </tr>
+      </thead>
+      <tbody id="sn-tb"></tbody>
+    </table>
+  </div>
+  <div class="empty" id="sn-empty" hidden>no launches carry these labels</div>
+</section>
+
+<!-- --------------------------------------------------------------- snipers -->
+<section id="p-snipers" data-panel="snipers" hidden>
+  <div class="ctl">
+    <select id="sw-sort">
+      <option value="hits">by lifetime hits</option>
+      <option value="recent">by most recent</option>
+      <option value="address">by address</option>
+    </select>
+    <label class="chk">min hits
+      <input type="number" id="sw-minhits" min="1" step="1" value="1" style="width:74px"></label>
+    <span class="hint">5 or more is a repeat first buyer</span>
+    <span class="hint">launches listed per wallet</span>
+    <select id="sw-per">
+      <option value="12" selected>12</option>
+      <option value="25">25</option>
+      <option value="50">50</option>
+      <option value="0">none</option>
+    </select>
+    <span class="grow"></span>
+    <span class="badge" id="sw-count">-</span>
+  </div>
+  <div class="stats" id="sw-stats"></div>
+  <div id="sw-msg" style="margin-bottom:9px"></div>
+  <div class="box">
+    <h2>reading these numbers</h2>
+    <div class="hint" id="sw-note">-</div>
+  </div>
+  <div class="tw">
+    <table>
+      <thead>
+        <tr>
+          <th style="width:34px">#</th>
+          <th>Wallet</th>
+          <th style="width:62px">Bot</th>
+          <th style="width:84px">Hits</th>
+          <th style="width:92px">Last seen</th>
+          <th style="width:132px">Spent</th>
+          <th style="width:124px">Profit</th>
+          <th style="width:118px">First into</th>
+        </tr>
+      </thead>
+      <tbody id="sw-tb"></tbody>
+    </table>
+  </div>
+  <div class="empty" id="sw-empty" hidden>no wallets match</div>
+</section>
+
+<!-- ----------------------------------------------------------------- copy -->
+<section id="p-copy" data-panel="copy" hidden>
+  <div class="box" id="c-picker">
+    <h2>pick a source token</h2>
+    <div class="inline">
+      <input type="search" id="c-q" placeholder="search name / symbol / address">
+      <button id="c-search">search</button>
+      <button class="ghost" id="c-blank" title="draft a plan without a source token">start blank</button>
+      <span class="hint" id="c-q-note">reads GET /api/tokens</span>
+    </div>
+    <div id="c-results"></div>
+    <h2 style="margin-top:14px">saved plans</h2>
+    <div id="c-plans"></div>
+  </div>
+
+  <div class="box" id="c-src" hidden>
+    <div class="inline">
+      <span class="hint">source</span>
+      <span class="mono" id="c-src-v">-</span>
+      <span class="grow"></span>
+      <button class="ghost" id="c-change" title="go back to the picker">change source</button>
+    </div>
+  </div>
+
+  <div id="c-form-wrap" hidden>
+    <div class="box">
+      <h2>token fields</h2>
+      <div class="grid">
+        <label class="f"><span>name</span><input id="f-name" autocomplete="off"></label>
+        <label class="f"><span>symbol</span><input id="f-symbol" autocomplete="off"></label>
+        <label class="f"><span>logo uri</span><input id="f-logo" autocomplete="off"></label>
+        <label class="f"><span>twitter</span><input id="f-twitter" autocomplete="off"></label>
+        <label class="f"><span>telegram</span><input id="f-telegram" autocomplete="off"></label>
+        <label class="f"><span>discord</span><input id="f-discord" autocomplete="off"></label>
+        <label class="f"><span>website</span><input id="f-website" autocomplete="off"></label>
+        <label class="f"><span>farcaster</span><input id="f-farcaster" autocomplete="off"></label>
+      </div>
+      <label class="f" style="margin-top:10px"><span>description</span>
+        <textarea id="f-description"></textarea></label>
+    </div>
+
+    <div class="box">
+      <h2>launch parameters</h2>
+      <div class="grid">
+        <label class="f"><span>creator fee recipient</span>
+          <input id="f-recipient" autocomplete="off" placeholder="0x..."></label>
+        <label class="f"><span>creator tax bps</span>
+          <input id="f-tax" type="number" min="0" step="1" value="0"></label>
+        <label class="f"><span>launch config id</span>
+          <input id="f-config" type="number" min="0" step="1" value="0"></label>
+        <label class="f"><span>pair token</span>
+          <input id="f-pair" autocomplete="off"></label>
+        <label class="f"><span>initial buy (quote)</span>
+          <input id="f-buy" type="number" min="0" step="0.001" value="0.05"></label>
+        <label class="f"><span>salt (blank = generated)</span>
+          <input id="f-salt" autocomplete="off" placeholder="blank = server generated"></label>
+      </div>
+      <div class="inline" style="margin-top:10px">
+        <label class="chk"><input type="checkbox" id="f-buyback"> buyback enabled</label>
+        <span class="hint" id="f-recipient-hint">connect a wallet to fill the creator fee recipient</span>
+      </div>
+      <div class="hint" id="f-buy-hint" style="margin-top:6px">
+        the initial buy spends real ETH inside the launch transaction, check it before launching
+      </div>
+    </div>
+
+    <div class="box">
+      <h2>extra fields</h2>
+      <div id="c-extra"></div>
+      <button class="ghost" id="c-extra-add" style="margin-top:4px">+ add field</button>
+      <div class="hint" style="margin-top:6px">
+        any label / value pair, for example a website mirror
+      </div>
+    </div>
+
+    <div class="box">
+      <h2>notes</h2>
+      <textarea id="f-notes" placeholder="private notes, never sent on chain"></textarea>
+    </div>
+
+    <div class="box" id="c-cost">
+      <h2>launch cost and economics</h2>
+      <div class="hint">reading /api/launch/config and /api/launch/preview</div>
+    </div>
+
+    <div class="box">
+      <div class="inline">
+        <button class="b-p lg" id="c-save">Save draft</button>
+        <button class="lg" id="c-json">Copy JSON</button>
+        <button class="b-d lg" id="c-launch">Launch from wallet</button>
+        <span class="grow"></span>
+        <button class="ghost" id="c-delete" disabled title="delete this saved plan">Delete</button>
+        <span class="badge" id="c-status">-</span>
+        <span class="badge" id="c-id">unsaved</span>
+      </div>
+      <div id="c-msg" style="margin-top:9px"></div>
+    </div>
+
+    <div class="box cfm" id="c-confirm" hidden>
+      <h2>confirm launch - this spends real money on mainnet</h2>
+      <div id="c-confirm-body"></div>
+      <div class="inline" style="margin-top:11px">
+        <button class="b-d lg" id="c-send">Confirm and send</button>
+        <button class="lg" id="c-cancel">Cancel</button>
+        <span class="hint">the second click sends it through your wallet, nothing is sent before</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- --------------------------------------------------------------- wallet -->
+<section id="p-wallet" data-panel="wallet" hidden>
+  <div class="box">
+    <h2>wallet</h2>
+    <div class="inline" id="w-noconn">
+      <button class="b-p lg" id="w-connect">Connect wallet</button>
+      <span class="hint" id="w-note">uses window.ethereum only, no library and no key, the backend never signs</span>
+    </div>
+    <div id="w-conn" hidden>
+      <div class="inline">
+        <span class="mono cp" id="w-addr" data-copy="" title="click to copy">-</span>
+        <span class="badge" id="w-chain">chain -</span>
+        <button class="ghost" id="w-switch" hidden>switch to Robinhood Chain</button>
+        <span class="grow"></span>
+        <button class="ghost" id="w-view-clear" hidden>back to my wallet</button>
+        <button class="ghost" id="w-disconnect">disconnect</button>
+      </div>
+    </div>
+    <div id="w-msg" style="margin-top:9px"></div>
+  </div>
+  <div class="stats" id="w-summary"></div>
+  <div class="box">
+    <h2 id="w-launched-h">deployed tokens</h2>
+    <div class="tw">
+      <table>
+        <thead><tr>
+          <th>Token</th><th style="width:74px">Age</th><th style="width:98px">MCap USD</th>
+          <th style="width:118px">Graduation</th><th style="width:78px">Snipe</th>
+          <th style="width:96px">Volume</th><th style="width:60px"></th>
+        </tr></thead>
+        <tbody id="w-launched"></tbody>
+      </table>
+    </div>
+    <div class="empty" id="w-launched-empty" hidden>no launches from this wallet</div>
+  </div>
+  <div class="box">
+    <h2>early buys</h2>
+    <div class="tw">
+      <table>
+        <thead><tr>
+          <th>Token</th><th style="width:74px">Age</th><th style="width:110px">First buy</th>
+          <th style="width:80px">Delta</th><th style="width:88px">Snipe</th>
+          <th style="width:60px"></th>
+        </tr></thead>
+        <tbody id="w-early"></tbody>
+      </table>
+    </div>
+    <div class="empty" id="w-early-empty" hidden>no early buys indexed</div>
+  </div>
+  <div class="box">
+    <h2>watchlist - wallets you suspect of sniping</h2>
+    <div class="inline">
+      <input id="wl-addr" placeholder="0x address" style="width:330px" autocomplete="off">
+      <input id="wl-label" placeholder="label (optional)" style="width:180px" autocomplete="off">
+      <button class="b-p" id="wl-add">add</button>
+      <span class="grow"></span>
+      <button class="ghost" id="wl-refresh">refresh</button>
+    </div>
+    <div id="wl-list" style="margin-top:9px"></div>
+  </div>
+</section>
+
+<div id="foot"></div>
+<!-- ------------------------------------------------------------ coin card -->
+<!-- one overlay shared by every table; the tab under it never changes -->
+<div id="coin" class="cwrap" hidden>
+  <div class="ccard" id="coin-card" role="dialog" aria-modal="true"
+       aria-label="coin card" tabindex="-1">
+    <div id="coin-body"></div>
+  </div>
+</div>
+<div id="toast"></div>

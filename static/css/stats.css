@@ -1,0 +1,159 @@
+/* The number strips and the distribution bar. The strip used to be a keynote
+   slide: four enormous figures on a hairline. It is a panel of metrics now -
+   a label and a value per cell, one hairline between cells - because the slide
+   was competing with the table it opened, and the figures a reader actually
+   compares are in the table, not above it. */
+
+/* The strip above a table. Sized to the viewport rather than fixed, so four
+   figures become two and then one as the window narrows instead of shrinking
+   into illegibility.
+
+   The hairline between two cells is drawn inside the cell that comes second, as
+   a 1px inset shadow on its leading edge, rather than by letting the panel's
+   own colour show through a 1px gap. The gap version is the tidier rule and it
+   was the first one written, but it has a hole in it: a row that does not fill
+   its last track leaves the panel's colour showing as a block. The cells here
+   are a count the script decides - four on the volume strip, five on the launch
+   one, ten on the sniper profile - so a partial last row
+   is the normal case and not the exception, and at 400px the launch strip shows
+   it as a grey band two thirds of a row wide. A line drawn inside the cell
+   instead leaves an empty track as the panel's own surface, which reads as
+   nothing at all. */
+.hero{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(150px,1fr));
+  background:var(--bg-1);
+  border:1px solid var(--line-2);
+  border-radius:var(--r-lg);
+  overflow:hidden;
+}
+/* Four of the five heroes are filled by the script after their first fetch. An
+   empty one would leave a hairline with nothing above it. */
+.hero:empty{display:none}
+
+.stat{
+  display:flex;flex-direction:column;gap:var(--s1);min-width:0;
+  padding:var(--s3) var(--s4);
+  background:var(--bg-1);
+  /* Two lines per cell, both painted inside it: the leading edge separates it
+     from the cell before it, and the top edge runs unbroken across the panel
+     because every cell draws its own - which is also what separates one row of
+     the strip from the next, now that there is no gap to do it. */
+  box-shadow:inset 1px 0 0 var(--line),inset 0 1px 0 var(--edge);
+}
+
+/* The label. Same 10px mono as a column heading and a toolbar label, which is
+   what ties the three ranks of the page together. */
+.stat .k{
+  font:500 var(--t-micro)/1 var(--mono);
+  letter-spacing:var(--track-label);
+  text-transform:uppercase;
+  color:var(--dim);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+
+/* The number. Tight tracking, because display sizes set with the body's
+   spacing look loose, and tabular figures so a value that updates every three
+   seconds does not shuffle its own width. */
+.stat .v{
+  font-size:var(--t-xl);
+  font-weight:600;
+  line-height:1;
+  letter-spacing:var(--track-display);
+  color:var(--txt);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+
+/* Two ranks, not four. The strip is the largest thing above a table and the
+   card's own stats are read one at a time inside it, so the card steps down
+   and everything else reads at the one size. The 40px hero value went with the
+   slide: `--t-xl` fits four figures in a 1352px spine, which was the whole
+   reason for having three ranks here. */
+.cstat .stat .v{font-size:var(--t-lg)}
+/* 120px, not 130: the sniper strip is nine cards wide and two of them span two
+   columns, so it asks the grid for ten. At 130 the ten and their nine 16px gaps
+   come to 1444px against the 1352 the page gives a panel, and the tenth card
+   wraps alone onto a second row - which reads as a layout that broke rather
+   than as a strip. Ten columns of 120.8 is what fits. */
+.cstat{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:var(--s4)}
+.cstat .stat.wide{grid-column:span 2}
+/* The card's stats give the panel treatment back. They are already inside a
+   panel, so a surface and a lit edge each would be a frame drawn nine times
+   inside a frame - and the 120px track above was measured with no padding on a
+   stat, so adding any would take the width out of the numbers rather than out
+   of the gaps, and an ellipsised figure is worse than a small one. */
+.cstat .stat{
+  padding:0;
+  background:none;
+  box-shadow:none;
+}
+
+/* A figure that is a count of something alarming - how many launches were
+   bundled - is allowed the loss colour. It is a state, not a price. */
+.stat .v.hot{color:var(--neg)}
+.stat .v.warn{color:var(--warn)}
+.stat .v.pos{color:var(--pos)}
+.stat .v.neg{color:var(--neg)}
+.stat .v.dim{color:var(--dim);font-weight:500}
+
+/* ------------------------------------------------- the distribution bar */
+/* One bar, every launch, each label a segment. It is the one place on the page
+   where several colours sit beside each other, and they are the same tokens
+   the pills use, so a red segment and a red pill mean the same thing. */
+.stack{
+  display:flex;
+  height:10px;
+  border-radius:var(--r-full);
+  overflow:hidden;
+  background:var(--bg-3);
+  /* Not a gap: a segment is a share of a whole, and a gap between them would
+     make the widths stop adding up to the bar. */
+  gap:0;
+}
+.stack i{display:block;height:100%;min-width:1px}
+
+/* Before the first fetch lands the bar is one grey placeholder that pulses,
+   so the layout is at its final height and nothing jumps when data arrives. */
+.stack .ph{
+  width:100%;
+  background:var(--bg-3);
+  animation:pulse 1.5s var(--ease) infinite;
+}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.45}}
+
+/* Colours by label, from the one definition in tokens.css. */
+.stack i[data-lb=bundled],  .dot[data-lb=bundled]  {background:var(--lb-bundled)}
+.stack i[data-lb=sniped],   .dot[data-lb=sniped]   {background:var(--lb-sniped)}
+.stack i[data-lb=early],    .dot[data-lb=early]    {background:var(--lb-early)}
+.stack i[data-lb=slow],     .dot[data-lb=slow]     {background:var(--lb-slow)}
+.stack i[data-lb=none],     .dot[data-lb=none]     {background:var(--lb-none)}
+.stack i[data-lb=unknown],  .dot[data-lb=unknown]  {background:var(--lb-unknown)}
+.stack i[data-lb=unindexed],.dot[data-lb=unindexed]{background:var(--lb-unindexed)}
+
+/* ------------------------------------------------------------- legend */
+.legend{
+  display:flex;flex-wrap:wrap;gap:var(--s2) var(--s5);
+  margin-top:var(--s3);
+  font-family:var(--mono);font-size:var(--t-micro);
+  color:var(--dim);
+}
+.legend span{display:inline-flex;align-items:center;gap:var(--s2)}
+.legend b{font-weight:600;color:var(--txt-2)}
+
+/* The swatch. A square rather than a circle, because at 8px a circle's edge
+   is all antialiasing and it reads as a smudge. */
+.dot{width:8px;height:8px;border-radius:2px;flex:none;background:var(--line-2)}
+/* The two that mark a row are drawn a size up and ringed in their own colour,
+   so the legend swatch and the filled pill in the table are recognisably the
+   same object rather than two colours that happen to match. */
+.dot[data-lb=bundled],.dot[data-lb=sniped]{width:10px;height:10px;border-radius:3px}
+.dot[data-lb=bundled]{box-shadow:0 0 0 2px var(--bg),0 0 0 3px var(--lb-bundled)}
+.dot[data-lb=sniped] {box-shadow:0 0 0 2px var(--bg),0 0 0 3px var(--lb-sniped)}
+
+/* Narrow windows get a lower floor on the track and less room inside a cell,
+   rather than smaller type: the values are already at the one size the strip
+   uses, and stepping them down again here would put a third rank back. */
+@media (max-width:700px){
+  .hero{grid-template-columns:repeat(auto-fit,minmax(120px,1fr))}
+  .stat{padding:var(--s2) var(--s3)}
+}

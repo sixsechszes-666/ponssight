@@ -1,0 +1,242 @@
+/* The Copy and Wallet panels: form sections, field grids, picker rows, and the
+   three message boxes.
+
+   A section here is a heading with a hairline under it and space around it,
+   not a bordered card. Ten bordered boxes down one panel is the look this
+   redesign exists to get rid of, and it costs a border on every edge to say
+   something a rule and 24px of air say better. The one thing that does get a
+   real border is the confirmation, because it is the only section that spends
+   money.
+
+   The round that added panels to the tables left this alone on purpose, and
+   the count is the reason: Copy is eight sections, Wallets five, Wallet four.
+   A panel per table says where a list begins and ends, which is a thing rows
+   on a near-black canvas genuinely cannot say for themselves. Eight panels
+   down a form says nothing at all. So the grammar is split rather than
+   uniform - a page of lists is panels, a page of fields is a form - and the
+   hairline under a heading is still what separates one part of a form from
+   the next. */
+
+.box{min-width:0}
+.box + .box{margin-top:var(--s5)}
+/* The heading is a label and the hairline is the separator, so the two are
+   tied together as one object. */
+.box > h2{
+  padding-bottom:var(--s3);
+  border-bottom:1px solid var(--line);
+  margin-bottom:var(--s4);
+}
+
+/* ------------------------------------------------------------ fields */
+/* Auto-fit rather than a fixed column count: the Copy form has eight short
+   fields and the launch parameters have six long ones, and both should fill
+   the width without either being told how many columns it has. */
+/* 12px between two rows of fields, 16px between two columns of them. A field
+   is a label with an input under it and the pair reads as one object, so the
+   vertical gap only has to separate objects - while the horizontal gap
+   separates two objects that are also two columns of a grid, and a column that
+   reads as too narrow is the thing that makes a form look cramped. */
+.grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(230px,1fr));
+  gap:var(--s3) var(--s4);
+}
+
+/* A labelled field. The label is above the input, not beside it, so a long
+   placeholder never pushes the column widths around. */
+.f{display:flex;flex-direction:column;gap:var(--s2);min-width:0}
+.f > span{
+  font:500 var(--t-micro)/1 var(--mono);
+  letter-spacing:var(--track-label);
+  text-transform:uppercase;
+  color:var(--dim);
+}
+.f input,.f textarea,.f select{width:100%}
+/* A field inside a checkbox row must not stretch to fill the column. */
+.f.mt3{grid-column:1 / -1}
+
+/* ------------------------------------------------------ key and value */
+/* The cost breakdown. Two columns, the label right-aligned against the figure
+   so the numbers stack on one edge and can be compared down the list. */
+.kv{
+  display:grid;
+  grid-template-columns:1fr auto;
+  gap:var(--s2) var(--s5);
+  align-items:baseline;
+}
+.kv .k{font-size:var(--t-sm);color:var(--dim);min-width:0}
+.kv .v{
+  font-family:var(--mono);font-size:var(--t-sm);
+  color:var(--txt);text-align:right;
+  white-space:nowrap;
+}
+
+/* --------------------------------------------------------- logo drop */
+/* The one control on this page whose result leaves the machine before a
+   transaction does. Drawn as a target rather than a button because the pointer
+   can either click it or drop a file on it, and a button advertises only the
+   first. */
+.drop{
+  display:flex;align-items:center;justify-content:center;
+  min-height:180px;
+  padding:var(--s5);
+  border:1px dashed var(--line-3);
+  border-radius:var(--r-md);
+  background:var(--bg-2);
+  cursor:pointer;
+  text-align:center;
+  transition:border-color var(--dur-1) var(--ease),
+             background-color var(--dur-1) var(--ease);
+}
+.drop:hover{border-color:var(--txt-2)}
+.drop:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.drop.on{border-color:var(--txt);background:var(--bg-3)}
+/* The contents never take the pointer. A drag that crosses one of them fires
+   dragleave on the zone itself, and the highlight flickers off mid-drag with
+   the file still over it. */
+.drop > *{pointer-events:none}
+.drop-in{display:flex;flex-direction:column;gap:var(--s2);align-items:center}
+.drop-in b{font-size:var(--t-md);font-weight:500;color:var(--txt-2)}
+/* Capped by height, not width: a logo is roughly square and the panel is wide,
+   so a 1200px screenshot scaled to the panel's width would push the form below
+   it off the screen. */
+.drop > img{max-height:160px;max-width:100%;border-radius:var(--r-sm)}
+
+/* --------------------------------------------------------- basis points */
+/* A bps figure with the percentage it means beside it. The field holds the
+   number that goes on chain because that is what gets signed; this is so 200
+   cannot be read as 200%. */
+.bps{
+  font-weight:600;color:var(--txt-2);letter-spacing:0;
+  text-transform:none;margin-left:var(--s2);
+}
+
+/* --------------------------------------------------------------- radios */
+/* Two mutually exclusive entry points, stacked inside one field so the labels
+   sit on the input rows rather than above them. */
+.radios{display:flex;flex-direction:column;gap:var(--s2);padding-top:var(--s2)}
+.radios .chk{white-space:normal;align-items:flex-start}
+.radios .chk input{margin-top:1px}
+.radios input[type=radio]{
+  appearance:none;width:14px;height:14px;flex:none;
+  border:1px solid var(--line-3);border-radius:var(--r-full);
+  background:var(--bg-2);padding:0;
+  transition:border-color var(--dur-1) var(--ease),
+             box-shadow var(--dur-1) var(--ease);
+}
+.radios input[type=radio]:hover{border-color:var(--txt-2)}
+/* Filled and ringed in the canvas colour rather than given a pseudo-element
+   dot: the checkbox beside it is drawn the same way and the two controls sit
+   one above the other in this form. */
+.radios input[type=radio]:checked{
+  border-color:var(--txt-2);
+  background:var(--txt-2);
+  box-shadow:inset 0 0 0 3px var(--bg-2);
+}
+.radios input[type=radio]:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+
+/* ------------------------------------------------------ extra fields */
+/* label, value, remove. The remove button is the quiet weight, because it is
+   the one action here nobody means to take. */
+.exrow{display:flex;align-items:center;gap:var(--s2);margin-bottom:var(--s2)}
+.ex-l{flex:0 0 34%;min-width:0}
+.ex-v{flex:1 1 auto;min-width:0}
+.exrow .ghost{flex:none;width:32px;padding:0}
+
+/* ----------------------------------------------------------- pickers */
+/* A row you choose from: a search result, or a saved plan. Reads as a list
+   item until hovered, and the selected plan keeps a white leading edge. */
+.prow{
+  display:flex;align-items:center;gap:var(--s3);
+  padding:var(--s3);
+  border-bottom:1px solid var(--line);
+  min-width:0;
+  transition:background-color var(--dur-1) var(--ease);
+}
+.prow:last-child{border-bottom:none}
+.prow:hover{background:var(--wash)}
+.prow .mono b{color:var(--txt)}
+.prow .dim{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.prow.on{background:var(--wash-2);box-shadow:inset 2px 0 0 var(--txt)}
+/* The actions on a row stay out of the way until the row is pointed at, so a
+   list of plans is a list, not a grid of buttons. */
+.prow .ghost{opacity:0;transition:opacity var(--dur-1) var(--ease)}
+.prow:hover .ghost,.prow:focus-within .ghost,.prow.on .ghost{opacity:1}
+
+/* ------------------------------------------------------ transfer steps */
+/* One line of a transfer: which leg, what is happening to it, and the figure
+   that leg is about. The state is an attribute rather than a class per state,
+   because the same line is redrawn as its leg moves - planned, sent, filled -
+   and a class would mean adding and removing names on a node that is already
+   in the document. The colour is the state and nothing else: the amounts stay
+   in the quiet half of the pair so a green line does not read as a green
+   number. */
+.kstep{
+  display:flex;align-items:baseline;gap:var(--s3);
+  padding:var(--s2) 0;
+  border-bottom:1px solid var(--line);
+  font-size:var(--t-sm);
+  color:var(--txt-2);
+  min-width:0;
+}
+.kstep:last-child{border-bottom:none}
+.kstep .kn{flex:0 0 56px;color:var(--dim);font-size:var(--t-xs)}
+.kstep .kd{
+  flex:0 1 auto;text-align:right;color:var(--dim);
+  min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+.kstep[data-st="run"]{color:var(--txt)}
+.kstep[data-st="wait"]{color:var(--dim)}
+.kstep[data-st="ok"]{color:var(--pos)}
+.kstep[data-st="bad"]{color:var(--neg)}
+
+/* ---------------------------------------------------------- messages */
+/* Three states, each a tinted wash with a leading accent rather than a
+   bordered box: a message is not a container, it is a remark about the thing
+   above it. */
+.warnbox,.dangerbox,.okbox{
+  padding:var(--s3) var(--s3) var(--s3) var(--s4);
+  border-radius:0 var(--r-sm) var(--r-sm) 0;
+  font-size:var(--t-sm);
+  line-height:1.55;
+  word-break:break-word;
+}
+.warnbox{
+  background:var(--warn-bg);box-shadow:inset 3px 0 0 var(--warn);
+  color:var(--warn);
+}
+.dangerbox{
+  background:var(--neg-bg);box-shadow:inset 3px 0 0 var(--neg);
+  color:var(--neg);
+}
+.okbox{
+  background:var(--pos-bg);box-shadow:inset 3px 0 0 var(--pos);
+  color:var(--pos);
+}
+/* Inside a message the eye needs the explanation, not just the verdict, so
+   anything that is not the verdict reads as ordinary text. */
+.warnbox .hint,.dangerbox .hint,.okbox .hint{color:var(--txt-2)}
+.hint.err{color:var(--warn)}
+
+/* ------------------------------------------------------ confirmation */
+/* The only bordered panel on the page, and the only place red is allowed to
+   fill anything. It exists to be hard to walk past. */
+.cfm{
+  border:1px solid var(--neg-ln);
+  background:var(--neg-bg);
+  border-radius:var(--r-md);
+  padding:var(--s5);
+  box-shadow:inset 3px 0 0 var(--neg);
+}
+.cfm > h2{
+  border-bottom:none;padding-bottom:0;margin-bottom:var(--s4);
+  color:var(--neg);
+}
+
+@media (max-width:700px){
+  .grid{grid-template-columns:1fr}
+  .ex-l{flex:1 1 40%}
+  .kv{grid-template-columns:1fr;gap:var(--s1)}
+  .kv .v{text-align:left}
+  .prow .ghost{opacity:1}
+}

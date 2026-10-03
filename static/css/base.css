@@ -1,0 +1,119 @@
+/* The reset, the type defaults, and the handful of utilities the markup uses.
+   Everything here is either a browser default being taken away or a class that
+   means the same thing in every table. Nothing here knows what a token row is. */
+
+*,*::before,*::after{box-sizing:border-box}
+*{margin:0;padding:0}
+
+html{
+  /* The page is dark and stays dark: no light-mode form controls, no white
+     scrollbar gutter when a table overflows. */
+  color-scheme:dark;
+  -webkit-text-size-adjust:100%;
+}
+
+body{
+  background:var(--bg);
+  color:var(--txt);
+  font:400 var(--t-md)/1.5 var(--sans);
+  /* A dashboard redraws every few seconds; smoothing the type on a near-black
+     ground is the difference between crisp and muddy at these sizes. */
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  min-height:100vh;
+}
+
+/* A figure that changes while you look at it has to keep its width, or every
+   poll reflows the column beside it. Applied to the whole document rather than
+   to .mono alone, because the big hero numbers are sans and need it too. */
+body{font-variant-numeric:tabular-nums}
+
+::selection{background:var(--line-3);color:var(--txt)}
+
+h1,h2,h3{font-weight:600;letter-spacing:var(--track-display)}
+
+/* A section heading is a label, not a headline: the numbers under it are the
+   headline. Ten pixels of mono, wide tracking, upper case, all of it dim. */
+h2{
+  font:500 var(--t-micro)/1 var(--mono);
+  letter-spacing:var(--track-label);
+  text-transform:uppercase;
+  color:var(--dim);
+}
+
+a{color:var(--txt);text-decoration:none;border-bottom:1px solid var(--line-2)}
+a:hover{border-bottom-color:var(--line-3)}
+
+/* One focus ring for the whole page, and only for the keyboard. A visible ring
+   on a mouse click makes a dense table look broken. */
+:focus{outline:none}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+
+/* --------------------------------------------------------------- type */
+.mono{font-family:var(--mono);font-size:var(--t-sm);letter-spacing:-.01em}
+.dim{color:var(--dim)}
+.dim2{color:var(--dim-2)}
+
+/* The only two colours that mean something, in the only two places they are
+   allowed to: profit and loss. */
+.pos{color:var(--pos)}
+.neg{color:var(--neg)}
+
+/* A numeric column, right-aligned so the digits line up on their last place
+   instead of on their first. */
+.num{text-align:right}
+
+/* ---------------------------------------------------------- layout bits */
+/* A spacer that eats whatever is left in a flex row, which is how every
+   toolbar in this app pushes its badge to the right without a wrapper. */
+.grow{flex:1 1 auto;min-width:0}
+.inline{display:flex;align-items:center;gap:var(--s3);flex-wrap:wrap}
+.row{display:flex;align-items:baseline;gap:var(--s2);min-width:0}
+
+/* -------------------------------------------------- margins, four of them */
+/* The only spacing utilities in the project. Everything else is laid out by
+   its own component, so a stray class cannot quietly become the spacing
+   system. */
+.mt1{margin-top:var(--s1)}
+.mt2{margin-top:var(--s2)}
+.mt3{margin-top:var(--s3)}
+.mt4{margin-top:var(--s4)}
+
+/* ------------------------------------------------------------- messages */
+.hint{color:var(--dim);font-size:var(--t-sm)}
+.empty{color:var(--dim);font-size:var(--t-sm);padding:var(--s6) var(--s4);text-align:center}
+/* Not var(--neg): a failed read is a door that did not open, not a loss. The
+   money colours are kept for money. */
+.err{color:var(--warn)}
+
+/* A skip link has to be reachable by keyboard and invisible until it is
+   focused, which is what the off-screen position does. */
+.skip{
+  position:absolute;left:-9999px;top:0;z-index:100;
+  padding:var(--s2) var(--s4);background:var(--txt);color:var(--bg);
+  font:500 var(--t-sm)/1 var(--sans);border-radius:0 0 var(--r-md) 0;
+}
+.skip:focus{left:0}
+
+/* The attribute the app toggles. Kept here so every panel, box and card can be
+   hidden with one rule rather than each of them restating it. */
+[hidden]{display:none !important}
+
+/* Scrollbars, in the same palette. Left alone they are the one light-grey
+   thing on the page. */
+*{scrollbar-width:thin;scrollbar-color:var(--line-2) transparent}
+*::-webkit-scrollbar{width:10px;height:10px}
+*::-webkit-scrollbar-track{background:transparent}
+*::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:var(--r-full)}
+*::-webkit-scrollbar-thumb:hover{background:var(--line-3)}
+
+/* Motion is decoration here - a tab fade, a row highlight - so it is the first
+   thing to go when the system asks for less of it. */
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{
+    animation-duration:.01ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.01ms !important;
+    scroll-behavior:auto !important;
+  }
+}

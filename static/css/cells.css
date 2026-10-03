@@ -1,0 +1,241 @@
+/* The contents of a cell: the token identity, the age, the graduation bar,
+   the snipe label, the link row. These are the pieces every table repeats, so
+   they are defined once and every table inherits the same look for free. */
+
+/* ---------------------------------------------------------------- token */
+.tok{display:flex;align-items:center;gap:var(--s3);min-width:0}
+
+/* A logo is 28px because at 24 the letter placeholder is illegible and at 32
+   the row grows taller than the two lines of text beside it. */
+.logo{
+  width:28px;height:28px;flex:none;
+  border-radius:var(--r-sm);
+  background:var(--bg-2);
+  border:1px solid var(--line-2);
+  object-fit:cover;
+}
+/* The letter shown when there is no logo, or when the one there failed to
+   load. Same box as the image, so a broken logo does not shift the row. */
+.logo.ph{
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:var(--t-sm);font-weight:600;
+  color:var(--dim);text-transform:uppercase;
+  /* The four letters that share a glyph shape at this size are the ones a
+     token is most likely to start with; nudging them off the baseline is not
+     worth it, so the whole placeholder is centred instead. */
+  line-height:1;
+}
+
+.nm{
+  font-size:var(--t-md);font-weight:500;color:var(--txt);
+  line-height:1.25;
+  /* A token name can be a sentence - the field is free text off the chain -
+     so it truncates rather than wrapping the row to four lines. */
+  max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+}
+/* The name is the card's opener. It is a button for the keyboard and the
+   screen reader, and looks like the text it replaced. */
+.nmbtn{
+  appearance:none;background:none;border:none;padding:0;height:auto;
+  font:inherit;color:inherit;text-align:left;cursor:pointer;
+  max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  display:block;
+  transition:color var(--dur-1) var(--ease);
+}
+.nmbtn:hover{background:none;color:var(--txt);text-decoration:underline;
+             text-decoration-color:var(--line-3);text-underline-offset:3px}
+
+.sym{
+  display:flex;align-items:center;gap:var(--s2);
+  font-family:var(--mono);font-size:var(--t-micro);
+  color:var(--dim);line-height:1.4;
+}
+.sym b{font-weight:600;color:var(--txt-2);letter-spacing:.04em}
+
+/* A copyable address or hash. Dashed because it looks like an affordance
+   rather than a link, which it is: it copies, it does not navigate. */
+.cp{
+  font-family:var(--mono);
+  color:var(--dim-2);cursor:pointer;
+  border-bottom:1px dashed var(--line-2);
+  transition:color var(--dur-1) var(--ease),border-color var(--dur-1) var(--ease);
+}
+.cp:hover{color:var(--txt-2);border-bottom-color:var(--line-3)}
+/* An address and the chip that copies it. Two things to click in one
+   cell, and they were written as two spans in a row, which put the word
+   copy directly against the last digits - 0x95...641ecopy, which reads
+   as one broken string rather than as a name with a control beside it. */
+.addr{display:inline-flex;align-items:center;gap:var(--s3)}
+/* A wallet already flagged as a repeat first buyer. Amber, not red: it is a
+   pattern worth noticing, not a loss. */
+.rep{color:var(--warn)}
+.rep.hi{color:var(--neg);font-weight:600}
+
+/* ----------------------------------------------------------------- age */
+/* Age is not money, so it never borrows the money colours. Recency is shown
+   by brightness instead: under a minute is full white, under five minutes is
+   the next step down, everything older is a label. */
+.age{
+  font-family:var(--mono);font-size:var(--t-xs);
+  color:var(--dim);
+}
+.age.hot{color:var(--txt-2)}
+.age.fresh{color:var(--txt);font-weight:600}
+
+/* ---------------------------------------------------------- graduation */
+/* The figure above its own bar, both right-aligned so a column of them stacks
+   on one edge. */
+.pct{
+  font-family:var(--mono);font-size:var(--t-micro);
+  color:var(--dim);text-align:right;
+  margin-bottom:var(--s2);
+  letter-spacing:.04em;
+}
+.bar{
+  height:3px;border-radius:var(--r-full);
+  background:var(--bg-3);
+  overflow:hidden;
+  min-width:64px;
+}
+/* Neutral white, not green. This is progress toward a threshold, and the
+   green on this page is spent on profit. */
+.bar > i{display:block;height:100%;background:var(--txt-2);border-radius:var(--r-full)}
+
+/* --------------------------------------------------------------- pills */
+/* Pair, and the graduated state. A pill is a word in a box, so it is set in
+   the same 10px mono as every other label and never fills with colour. */
+.pill{
+  display:inline-flex;align-items:center;
+  height:18px;padding:0 var(--s2);
+  border:1px solid var(--line-2);border-radius:var(--r-sm);
+  font-family:var(--mono);font-size:var(--t-micro);
+  letter-spacing:.06em;text-transform:uppercase;
+  color:var(--dim);white-space:nowrap;
+}
+/* Anything that is not quoted in the chain's own gas asset gets a brighter
+   edge, so a column of pairs can be scanned for the odd one out. */
+.pill.r{border-color:var(--line-3);color:var(--txt-2)}
+/* Graduated. The one good outcome the column exists to report. */
+.pill.g{border-color:var(--pos-ln);background:var(--pos-bg);color:var(--pos)}
+
+/* --------------------------------------------------------- snipe label */
+/* The label family. Each one is outlined in its own colour and left unfilled,
+   which keeps a table of them readable while still ranking them at a glance. */
+.lb{
+  display:inline-flex;align-items:center;
+  height:18px;padding:0 var(--s2);
+  border:1px solid var(--line-2);border-radius:var(--r-sm);
+  font-family:var(--mono);font-size:var(--t-micro);
+  letter-spacing:.06em;
+  color:var(--dim);white-space:nowrap;
+}
+/* The two that mark a row are the only labels that fill. An outline at 10px
+   inside a 12px row is not legible at a glance, and being legible at a glance
+   is the entire job of these two; the rest stay outlined so the filled ones
+   keep their weight by contrast. */
+.lb.bundled{
+  background:var(--lb-bundled);border-color:var(--lb-bundled);
+  color:var(--pill-ink);font-weight:600;
+}
+.lb.sniped{
+  background:var(--lb-sniped);border-color:var(--lb-sniped);
+  color:var(--pill-ink);font-weight:600;
+}
+.lb.early{border-color:var(--lb-early);color:var(--lb-early)}
+.lb.slow{border-color:var(--line-2);color:var(--lb-slow)}
+.lb.none{border-color:var(--line);color:var(--lb-none)}
+.lb.unknown{border-color:var(--line);color:var(--lb-unknown)}
+
+/* --------------------------------------------------------------- links */
+.links{display:flex;align-items:center;gap:var(--s1);flex-wrap:nowrap}
+.links a{
+  font-family:var(--mono);font-size:var(--t-micro);
+  letter-spacing:.06em;
+  color:var(--dim);
+  /* base.css gives every anchor a hairline; a link row is a rank of six of
+     them and six underlines reads as a mess. */
+  border-bottom:none;
+  transition:color var(--dur-1) var(--ease);
+}
+.links a:hover{color:var(--txt)}
+/* The names and the actions at the end of a row.
+   At rest they were dim 10px text on the page background, which is close
+   to nothing: the column read as empty until the pointer crossed it. The
+   one control among them was worse than invisible - the copy button kept
+   the default 32px height and 12px type while five labels beside it were
+   10px, so the row grew to fit the button and the labels centred against
+   the wrong thing. One shape now: same height, same size, so the rank has
+   a form before it is touched.
+   Filled white, at the person's request. These are the only controls in this
+   table that are not a figure - everything beside them is a number to compare
+   down the column - and on a canvas this dark a white chip is what makes them
+   read as things to press rather than as more labels. The ink is --pill-ink,
+   the same black the filled snipe pills use, so a filled chip and a filled
+   pill are inked alike.
+   Scoped to .links deliberately: .ghost is every per-row action on the page,
+   and the copy chip in the five other tables is not this row. The border is
+   reset on hover because controls.css raises it to --line-2, which draws a
+   dark ring around a white fill that reads as the chip changing size. */
+.links a.soc,
+.links .ghost{
+  height:22px;padding:0 var(--s2);
+  display:inline-flex;align-items:center;
+  color:var(--pill-ink);
+  background:var(--txt);
+  border-radius:var(--r-sm);
+  transition:color var(--dur-1) var(--ease),
+             background-color var(--dur-1) var(--ease);
+}
+.links a.soc:hover,
+.links .ghost:hover{
+  background:var(--txt-2);color:var(--pill-ink);border-color:transparent;
+}
+/* A social field that is not a URL - and a large share of them are prose, or
+   a bare handle, because the field is free text set at launch. It is shown,
+   because hiding it would lose information, but it is not a link and does not
+   pretend to be one. */
+.lnk-x{
+  font-family:var(--mono);font-size:var(--t-micro);
+  letter-spacing:.06em;
+  color:var(--dim-2);cursor:help;
+  border-bottom:1px dashed var(--line);
+}
+
+/* --------------------------------------------------------------- venues */
+/* The ways out of the card, behind a hairline at the end of the link row.
+   They are a different kind of thing from the names to their left - those are
+   facts about the token, these are places to go and look at it - so they are
+   chips rather than bare text, and the border says "this is a control" in a
+   row where everything else is a word. */
+.venues{
+  display:inline-flex;align-items:center;gap:var(--s2);
+  padding-left:var(--s3);margin-left:var(--s1);
+  border-left:1px solid var(--line-2);
+}
+.links a.venue{
+  height:22px;padding:0 var(--s3);
+  display:inline-flex;align-items:center;gap:5px;
+  border:1px solid var(--line-2);border-radius:var(--r-sm);
+  color:var(--txt-2);
+  transition:background-color var(--dur-1) var(--ease),
+             border-color var(--dur-1) var(--ease),
+             color var(--dur-1) var(--ease);
+}
+.links a.venue:hover{
+  background:var(--wash);border-color:var(--line-3);color:var(--txt);
+}
+/* The arrow out. Drawn from two borders rather than typed, because a glyph
+   here is a character that both the console and the stylesheet check would
+   have to be taught about, and this is the same mark with none of that. It
+   takes the chip colour, so it brightens with the label and never alone. */
+.links a.venue::after{
+  content:"";width:5px;height:5px;flex:none;
+  border-top:1px solid currentColor;border-right:1px solid currentColor;
+  transform:rotate(45deg) translate(-1px,1px);
+  opacity:.65;
+}
+.links a.venue:hover::after{opacity:1}
+
+@media (max-width:900px){
+  .nm{max-width:160px}
+}

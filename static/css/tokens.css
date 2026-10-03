@@ -1,0 +1,252 @@
+/* The palette, the scale and the timing. Every other sheet reads from here and
+   none of them writes a raw value, so a change to the look happens once in
+   this file rather than in nine.
+
+   The interface is deliberately monochrome. Surfaces, rules, text, borders,
+   buttons and the active tab are all white through black; the only coloured
+   tokens are the four that mean something - profit, loss, caution,
+   information. A dashboard whose subject is money cannot afford to spend
+   green on a button and then need green again for a gain.
+
+   This file also carries the density of the thing: the height of a table row,
+   of a control, of the two strips that can be sticky above one. Those are
+   measurements rather than colours, and they live here for the same reason -
+   the sheets are written against them, so a number that moves has to move in
+   one place or ten sheets drift apart. */
+
+:root{
+  /* ----------------------------------------------------------- surfaces */
+  /* Near-black rather than #000: a true black canvas makes the hairlines
+     above it ring, and on an OLED panel it smears when the page scrolls. */
+  --bg:      #08080A;   /* the canvas */
+  --bg-1:    #0D0D10;   /* raised: a panel, the top bar, the coin card, the toast */
+  --bg-2:    #141418;   /* recessed: an input, a row hover, a control in a panel */
+  --bg-3:    #1C1C22;   /* active: a pressed control, a selected row */
+
+  /* -------------------------------------------------------------- rules */
+  /* Solid rather than translucent so a rule reads the same over the canvas
+     and over a tinted row, which is where the old sheet's rgba lines went
+     muddy. */
+  --line:    #1A1A1F;   /* the default hairline */
+  --line-2:  #26262E;   /* this thing is interactive */
+  --line-3:  #3A3A45;   /* hover, and the edge of a focused field */
+
+  /* --------------------------------------------------------------- text */
+  --txt:     #F4F4F6;   /* the value, the heading, the thing being read */
+  --txt-2:   #A8A8B3;   /* secondary copy that is still meant to be read */
+  --dim:     #71717E;   /* labels, units, the quiet half of a pair */
+  --dim-2:   #4B4B56;   /* placeholders, disabled, an absent value */
+
+  /* -------------------------------------------------------------- money */
+  --pos:     #34D399;
+  --neg:     #FB5A78;
+  --warn:    #F5B841;
+  --info:    #6BA6FF;
+
+  /* Row and badge washes. Kept as their own tokens rather than an opacity on
+     the hue, because a row tint has to survive being drawn under a hover
+     background and a colour-mix would drift between browsers. */
+  --pos-bg:  rgba(52,211,153,.09);
+  --neg-bg:  rgba(251,90,120,.09);
+  --warn-bg: rgba(245,184,65,.09);
+  --info-bg: rgba(107,166,255,.09);
+  --pos-ln:  rgba(52,211,153,.32);
+  --neg-ln:  rgba(251,90,120,.32);
+  --warn-ln: rgba(245,184,65,.32);
+  --info-ln: rgba(107,166,255,.32);
+
+  /* ------------------------------------------------------------ families */
+  /* Geist first, then the platform UI face. Geist is the face this interface
+     is drawn for and it is named here so a machine that has it gets it, but
+     the stack still resolves with no network either way: there is no webfont
+     request behind this, because a font that fails to arrive is the one
+     failure on this page that cannot be caught and rendered around. */
+  --sans: "Geist","Geist Sans",-apple-system,BlinkMacSystemFont,
+          "Segoe UI Variable Display","Segoe UI",system-ui,sans-serif;
+  --mono: "Geist Mono",ui-monospace,SFMono-Regular,"SF Mono","Cascadia Mono",
+          "Segoe UI Mono",Menlo,Consolas,monospace;
+
+  /* --------------------------------------------------------------- type */
+  --t-micro: 10px;   /* mono, uppercase, wide tracking: a label */
+  --t-xs:    11px;
+  --t-sm:    12px;
+  --t-md:    13px;   /* body */
+  --t-lg:    15px;
+  --t-xl:    20px;
+  --t-2xl:   28px;
+  --t-3xl:   40px;
+  --t-4xl:   56px;   /* nothing reads this. The largest figure on the page is
+                        a 40px hero value and the strip that holds it has just
+                        become a metric panel. Kept because the scale is
+                        documented as a whole, and a gap in it is an invitation
+                        to write 56px as a literal somewhere else. */
+
+  /* Display sizes share one tracking so a 28px figure and a 56px figure
+     beside it are set the same way. */
+  --track-display: -.025em;
+  --track-label:   .14em;
+
+  /* -------------------------------------------------------------- space */
+  --s1: 4px;  --s2: 8px;  --s3: 12px; --s4: 16px;
+  --s5: 24px; --s6: 32px; --s7: 48px; --s8: 64px;
+
+  /* ------------------------------------------------------------- radius */
+  --r-sm:   4px;    /* pill, badge, small control */
+  --r-md:   8px;    /* input, button, stat */
+  --r-lg:   14px;   /* the coin overlay, the toast */
+  --r-full: 999px;
+
+  /* ------------------------------------------------------------- motion */
+  /* Fast and decelerating. A dashboard repaints constantly and an easing
+     with a slow tail turns every poll into visible drift. */
+  --ease:  cubic-bezier(.2,0,0,1);
+  --dur-1: 120ms;   /* a colour */
+  --dur-2: 180ms;   /* a size, an opacity */
+  --dur-3: 260ms;   /* the overlay */
+
+  /* ---------------------------------------------------------- elevation */
+  /* The only shadow on the page. Anything that is not floating above the
+     document does not get one. */
+  --shadow-pop: 0 24px 64px -16px rgba(0,0,0,.86),
+                0 2px 8px rgba(0,0,0,.5);
+
+  /* ------------------------------------------------------------- layout */
+  /* The spine, and the three things that sit against it. 1400 is a measured
+     number rather than a round one: the widest table on the page needs 1351px
+     of content, and with the 24px gutters this leaves it 1352. Growing it here
+     makes every table on every tab scroll sideways, so it does not grow. */
+  --page-max: 1400px;
+  --rail-w:   172px;   /* the left rail, at 1572px and wider */
+  --dock-w:   480px;   /* the coin panel when there is room to dock it */
+  --bar-h:    48px;    /* the sticky top bar. It no longer holds the tabs */
+  --tab-h:    36px;    /* the tab strip while it is horizontal, under 1572px */
+
+  /* Everything sticky measures from the bottom of the chrome, and the chrome
+     is one bar tall or two depending on the width of the window. One token
+     rather than two offsets, because four rules read it - the anchor offset,
+     the strip, the filter bar and the dock - and any two of them disagreeing
+     is a thing that lands behind another thing at one width only. */
+  --chrome-h:  var(--bar-h);
+
+  /* ------------------------------------------------------------ density */
+  /* How tall one row of a table is, and one control. Both were written as
+     literals in the sheets before, which is how a table and the filter bar
+     above it drifted a few pixels apart. `--s6` is not reused for the control
+     height: it is also a padding, a min-height and a gutter in half a dozen
+     places, and it is right in all of them. */
+  --row-pad-y: 7px;
+  --ctl-h:     28px;
+}
+
+/* The horizontal tab strip is a second sticky band, and it only exists while
+   the window is too narrow to hold the rail. Written as a media query over the
+   token rather than as two offsets in two sheets: below this width the strip
+   sits under the bar and everything that measures from the chrome has to move
+   down by exactly the strip's height, or the filter bar parks on top of it and
+   an anchor scrolls its target behind it.
+
+   The rail's width goes to zero here for the same reason. Below 1572 the rail
+   is a strip under the bar, so nothing is left of the page and a rule that
+   offsets itself by the rail - the toast is the one - has to stop doing it.
+   Reading 0 rather than being told the rail is gone keeps that rule to a
+   single declaration. */
+@media (max-width:1571px){
+  :root{
+    --chrome-h: calc(var(--bar-h) + var(--tab-h));
+    --rail-w: 0px;
+  }
+}
+
+/* Sticky table headers sit under the sticky top bar, so anything scrolled to
+   by an anchor has to clear both or it lands behind them. The chrome is one
+   band wide or two, so this reads the token rather than the bar. */
+html{scroll-padding-top:calc(var(--chrome-h) + var(--s5))}
+
+/* A second :root block rather than one long one. The declarations below are
+   all read by a sheet other than this one, and grouping them by what reads
+   them is what keeps this file navigable at seventy tokens. They were
+   previously written after the html rule with no block around them at all,
+   which is not a block the browser can use: every one of them was dropped on
+   parse, so the label palette, the row washes, the sticky bar's backdrop and
+   the chart gradient were all silently absent. */
+:root{
+
+/* ----------------------------------------------------------------- panels */
+/* A panel is a surface with a 1px border, and on a near-black canvas a border
+   alone draws a hole rather than a raised thing: nothing catches the light. So
+   the top edge of a panel gets one pixel of white at six percent, which is the
+   whole of the effect - it reads as a lit edge and it costs no shadow, which
+   matters because a shadow here would say the panel floats above the page and
+   it does not. */
+--edge:    rgba(255,255,255,.06);
+
+/* ---------------------------------------------------------- interaction */
+/* A hover is a wash of the text colour, not a new surface: raising the
+   background a step makes a moving cursor flash the whole row. */
+--wash:    rgba(255,255,255,.028);
+--wash-2:  rgba(255,255,255,.055);
+--focus:   rgba(255,255,255,.6);
+
+/* ---------------------------------------------------------------- chart */
+/* The price line is not a money figure - it has no sign and no good or bad
+   direction - so it stays in the monochrome ramp and leaves green and red
+   free to mean profit and loss on the same screen. */
+--area-1:  rgba(255,255,255,.07);
+--area-2:  rgba(255,255,255,0);
+--vol-b:   rgba(52,211,153,.42);   /* a bar whose window closed net-positive */
+--vol-s:   rgba(251,90,120,.42);   /* net-negative */
+
+/* -------------------------------------------------------- snipe labels */
+/* One definition for the pills in the tables, the legend and the segments of
+   the stacked bar. These three used to be literals in fmt.js, which meant the
+   palette lived in two languages and the legend kept the old sheet's pink
+   after the tokens had moved on. Severity runs bundled, sniped, early, then
+   the two greys that mean nothing was seen. */
+--lb-bundled:   var(--neg);
+--lb-sniped:    var(--warn);
+--lb-early:     var(--info);
+--lb-slow:      var(--dim);
+--lb-none:      var(--line-3);
+--lb-unknown:   var(--dim-2);
+--lb-unindexed: var(--line-2);
+
+/* ----------------------------------------------------------- translucent */
+/* Two surfaces have to let what is behind them show through: the sticky band
+   at the top of the window, which the table scrolls under, and the scrim
+   behind the coin card. Both are the canvas colour with the alpha turned down
+   rather than a new colour, so they stay the same hue as the ground they sit
+   on. The top bar and, under 1100px, the tab strip both read `--bg-blur`. */
+--bg-blur: rgba(8,8,10,.72);
+--scrim:   rgba(8,8,10,.72);
+
+/* ------------------------------------------------------- row highlighting */
+/* A bundled or sniped row is the one thing on this page that has to be found
+   without being read, so it is the one place the palette is allowed to raise
+   its voice. The tint is a tenth of the hue, not a fill: it sits under eleven
+   columns of figures, and a wash strong enough to see from across the room is
+   also strong enough to stop the eye comparing a column downwards. What
+   carries the signal is the combination - this wash, a solid bar on the
+   leading edge, and a filled pill - and only one of those three is a colour,
+   so the marking survives a greyscale screenshot and a reader who cannot
+   separate red from amber. */
+--tint-bundled:     rgba(251,90,120,.15);
+--tint-bundled-2:   rgba(251,90,120,.06);
+--tint-sniped:      rgba(245,184,65,.12);
+--tint-sniped-2:    rgba(245,184,65,.05);
+/* A snipe by a wallet already known for it is the same event a second time, so
+   it keeps the hue and takes a heavier tint. Severity is intensity here, never
+   a different colour: a red row under an amber pill is a row that lies. */
+--tint-sniped-hi:   rgba(245,184,65,.20);
+--tint-sniped-hi-2: rgba(245,184,65,.075);
+/* The hairline under a marked row. The row's own border is --line, which is
+   all but the page background, and a wash that never falls below 5% across
+   the width leaves no boundary over it at all - so consecutive marked rows
+   merged into one slab. These are the tint hues at a strength that survives
+   their own wash, which keeps the separator in the row's colour instead of
+   cutting a third grey across the gradient. */
+--tint-line-bundled: rgba(251,90,120,.34);
+--tint-line-sniped:  rgba(245,184,65,.30);
+/* Ink for a filled pill: the canvas itself, so the label sits in the same
+   black the page is drawn on rather than in a black of its own. */
+--pill-ink: var(--bg);
+}

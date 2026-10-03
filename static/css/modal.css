@@ -1,0 +1,187 @@
+/* The wallet connect dialog.
+
+   The same overlay as the coin card, deliberately a different shape: the card
+   is a page about a token, this is one short question with a handful of
+   answers. So it is a small panel, centred, with a bounded list - not a scroll
+   container that fills the window to hold content that never gets that long.
+
+   It sits at 55. Both neighbours are on purpose: the coin card is 50, so a
+   card open underneath stays underneath, and the toast is 60, so "connected
+   0x1234" is readable over the dialog that asked the question.
+
+   The keyframes are card.css's. It is loaded before this sheet and the two
+   overlays are meant to arrive the same way. */
+
+.wwrap{
+  position:fixed;inset:0;z-index:55;
+  display:flex;align-items:center;justify-content:center;
+  padding:var(--s6) var(--s5);
+  overflow-y:auto;overscroll-behavior:contain;
+  background:var(--scrim);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  animation:fade-in var(--dur-2) var(--ease);
+}
+.wcard{
+  width:100%;max-width:420px;
+  background:var(--bg-1);
+  border:1px solid var(--line-2);
+  border-radius:var(--r-lg);
+  box-shadow:var(--shadow-pop);
+  overflow:hidden;
+  animation:card-in var(--dur-3) var(--ease);
+}
+
+/* --------------------------------------------------------------- header */
+.whd{
+  display:flex;align-items:center;gap:var(--s3);
+  padding:var(--s3) var(--s5);
+  border-bottom:1px solid var(--line);
+}
+.whd h2{flex:none}
+.whd .grow{flex:1}
+/* The same button the coin card closes with, at the same height, because it is
+   the same gesture - and two close buttons a different size on two panels that
+   arrive the same way is a difference that means nothing. */
+.wclose{
+  background:transparent;border-color:var(--line-2);color:var(--dim);
+  height:var(--ctl-h);padding:0 var(--s3);
+  font-family:var(--mono);font-size:var(--t-micro);
+  letter-spacing:.08em;text-transform:uppercase;
+}
+.wclose:hover{background:var(--wash-2);border-color:var(--line-3);color:var(--txt)}
+
+/* Top lighter than bottom. A dialog's questions read downward and the last
+   thing in the body is usually a button, so the space that matters is the
+   space under it. */
+.wbody{padding:var(--s3) var(--s5) var(--s5)}
+
+/* ------------------------------------------------------- who you are */
+/* The connected state replaces the list rather than sitting above it: once a
+   wallet is chosen, choosing another is a rare thing to want and the address
+   is what the dialog was opened to see. */
+.wme{
+  display:flex;align-items:center;gap:var(--s3);
+  padding:var(--s3) var(--s4);
+  background:var(--wash);
+  border:1px solid var(--line-2);border-radius:var(--r-md);
+}
+.wme .wmeta{flex:1;min-width:0}
+.wme .wname{font-size:var(--t-md)}
+
+/* The full address, on its own line under the identity block, whole. Click to
+   copy, the same gesture as everywhere else this app prints one. */
+.waddr{
+  display:block;margin-top:var(--s2);
+  font-size:var(--t-sm);color:var(--txt-2);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  transition:color var(--dur-1) var(--ease);
+}
+.waddr:hover{color:var(--txt)}
+
+.wfoot{display:flex;align-items:center;gap:var(--s2);margin-top:var(--s3)}
+.wfoot .grow{flex:1}
+
+/* ----------------------------------------------------------- the list */
+.wlist{
+  display:flex;flex-direction:column;gap:2px;
+  /* A wallet browser can announce several, and a phone-relayed session adds
+     another. The cap keeps the dialog the same height no matter how many turn
+     up, so the two buttons under it never move. */
+  max-height:min(46vh,320px);overflow-y:auto;
+}
+
+.wrow{
+  display:flex;align-items:center;gap:var(--s3);
+  width:100%;padding:var(--s2);
+  background:transparent;border:1px solid transparent;border-radius:var(--r-md);
+  text-align:left;
+  transition:background-color var(--dur-1) var(--ease),
+             border-color var(--dur-1) var(--ease);
+}
+.wrow:hover{background:var(--wash);border-color:var(--line-2)}
+.wrow:disabled{cursor:not-allowed;opacity:.45}
+.wrow:disabled:hover{background:transparent;border-color:transparent}
+
+/* The wallet's own mark if it announced one, its initial if it did not. Both
+   land in the same 28px square so the list keeps one left edge whatever the
+   browser hands over. An image the wallet supplied is inert here - it is an
+   img, not inline markup - and a monogram is what an unannounced wallet gets
+   rather than a generic glyph that would read as "wallet" on every row. */
+.wico{
+  width:28px;height:28px;flex:none;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--bg-2);border:1px solid var(--line-2);border-radius:var(--r-sm);
+  overflow:hidden;
+  font:500 var(--t-xs)/1 var(--mono);color:var(--txt-2);
+}
+.wico img{width:100%;height:100%;object-fit:cover;display:block}
+
+.wmeta{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.wname{
+  font-size:var(--t-sm);font-weight:500;color:var(--txt);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.wsub{
+  font:400 var(--t-micro)/1.4 var(--mono);letter-spacing:.06em;color:var(--dim-2);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.wrow:hover .wsub{color:var(--dim)}
+
+/* What the row will do, not what it is. Uppercase mono like every other label
+   in the app, and dim until the pointer is on it. */
+.wstate{
+  flex:none;font:500 var(--t-micro)/1 var(--mono);
+  letter-spacing:var(--track-label);text-transform:uppercase;
+  color:var(--dim-2);
+  transition:color var(--dur-1) var(--ease);
+}
+.wrow:hover .wstate{color:var(--txt-2)}
+.wstate.ok{color:var(--pos)}
+
+.wsep{height:1px;background:var(--line);margin:var(--s4) 0 var(--s3)}
+.wnote{margin-top:var(--s3)}
+.wnote.err{color:var(--warn)}
+
+/* ------------------------------------------------------- the top bar */
+/* The connect widget. It took the place of the badge that used to sit here
+   reading "wallet -": one wallet thing in the bar instead of two, and this one
+   does the more useful job. The dot carries the state and the label carries
+   the address, the same division the live badge makes. */
+#w-open{
+  display:inline-flex;align-items:center;gap:var(--s2);
+  height:20px;padding:0 var(--s2);
+  background:transparent;border:1px solid var(--line-2);border-radius:var(--r-sm);
+  font-family:var(--mono);font-size:var(--t-micro);
+  letter-spacing:.08em;text-transform:uppercase;
+  color:var(--dim);white-space:nowrap;
+  transition:background-color var(--dur-1) var(--ease),
+             border-color var(--dur-1) var(--ease),
+             color var(--dur-1) var(--ease);
+}
+#w-open:hover{background:var(--wash);border-color:var(--line-3);color:var(--txt)}
+#w-open::before{
+  content:"";width:6px;height:6px;border-radius:var(--r-full);
+  background:var(--dim-2);flex:none;
+  transition:background-color var(--dur-1) var(--ease);
+}
+/* The uppercase belongs to the word, not to the value. "CONNECT" is a label and
+   belongs with the badges beside it; an address is a hex string, and uppercasing
+   it turns "0x" into "0X" and quietly rewrites a checksummed address on screen
+   while the copy button hands over the real one. So the transform is dropped
+   the moment there is a value to show. */
+#w-open.on,#w-open.off{text-transform:none}
+
+/* Connected, on the right chain. */
+#w-open.on{border-color:var(--line-3);color:var(--txt-2)}
+#w-open.on::before{background:var(--pos);box-shadow:0 0 0 3px var(--pos-bg)}
+/* Connected, on some other chain. Amber rather than red: it is a step the user
+   has not taken yet, not a loss. */
+#w-open.off::before{background:var(--warn)}
+
+@media (max-width:560px){
+  /* The bar is tight and the address is the part that can go. The dot still
+     says whether there is a wallet, and the dialog says which one. */
+  #w-open #w-open-v{display:none}
+  .wwrap{padding:var(--s5) var(--s3)}
+}

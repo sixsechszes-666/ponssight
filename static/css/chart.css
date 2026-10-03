@@ -1,0 +1,108 @@
+/* The price chart inside the coin card.
+
+   Every colour here is a var(), including the two gradient stops, which is why
+   coin.js emits them as classes: an SVG stop-color attribute cannot read a
+   custom property, so the colour has to arrive through a rule.
+
+   The price line is deliberately monochrome. A price is not a profit - it has
+   no sign and no good direction - so it stays in the white ramp and leaves
+   green and red free to mean money elsewhere on the same screen. */
+
+.chart-svg{
+  display:block;
+  width:100%;
+  height:auto;
+  /* Reserve the box before the first paint so the card does not grow by 280px
+     the moment the chart arrives. Matches COIN_VB in coin.js. */
+  aspect-ratio:1000 / 280;
+  overflow:visible;
+}
+
+/* Gridlines. Hairline, crisp, and behind everything: they are a ruler, not a
+   frame, so they never meet the edges of the plot. */
+.gline{
+  stroke:var(--line);
+  stroke-width:1;
+  shape-rendering:crispEdges;
+  vector-effect:non-scaling-stroke;
+}
+
+/* The price path. */
+.line{
+  fill:none;
+  stroke:var(--txt-2);
+  stroke-width:1.5;
+  stroke-linejoin:round;
+  stroke-linecap:round;
+  vector-effect:non-scaling-stroke;
+}
+
+/* The fill under it, fading out towards the axis. */
+.area{fill:url(#cgrad)}
+.gs0{stop-color:var(--area-1)}
+.gs1{stop-color:var(--area-2)}
+
+/* Volume bars along the bottom. Coloured by which way the bucket closed:
+   the one place in this chart where a direction exists, so the one place the
+   money colours are right. */
+.vbar{fill:var(--line-3)}
+.vbar.b{fill:var(--vol-b)}
+.vbar.s{fill:var(--vol-s)}
+
+/* The launch marker: a vertical rule where the token started trading, and a
+   dot at the price it opened at. It is the reference everything else on this
+   chart is read against. */
+.lm{
+  stroke:var(--warn);
+  stroke-width:1;
+  stroke-dasharray:3 3;
+  vector-effect:non-scaling-stroke;
+}
+.lmdot{fill:var(--warn)}
+
+/* --------------------------------------------------------- crosshair */
+/* Follows the pointer. Hidden until the pointer is over the plot, so a chart
+   nobody is touching has no cursor artifacts on it. */
+.cxg{pointer-events:none}
+.cx{
+  stroke:var(--line-3);
+  stroke-width:1;
+  stroke-dasharray:2 2;
+  vector-effect:non-scaling-stroke;
+}
+.cxdot{
+  fill:var(--bg-1);
+  stroke:var(--txt);
+  stroke-width:1.5;
+  vector-effect:non-scaling-stroke;
+}
+
+/* -------------------------------------------------------- the readout */
+/* The value under the cursor, in the section heading, so the pointer never has
+   to be near a label to be read. Empty until the first hover, and reserved at
+   its final width by the mono face. */
+.cread{
+  font-family:var(--mono);font-size:var(--t-sm);
+  color:var(--txt-2);
+  min-width:0;
+}
+
+/* ----------------------------------------------------------- the legend */
+.clab{
+  display:flex;align-items:center;gap:var(--s5);flex-wrap:wrap;
+  margin-top:var(--s3);
+  font-family:var(--mono);font-size:var(--t-micro);
+  color:var(--dim);
+}
+.clab span{display:inline-flex;align-items:center;gap:var(--s2)}
+/* The swatch. Square, like the distribution legend's, so the two legends on
+   the page read as the same component. */
+.clab i{width:8px;height:8px;border-radius:2px;flex:none;background:var(--line-2)}
+.clab .k-price{background:var(--txt-2)}
+.clab .k-buy{background:var(--vol-b)}
+.clab .k-sell{background:var(--vol-s)}
+.clab .k-launch{background:var(--warn)}
+
+@media (max-width:700px){
+  .clab{gap:var(--s3) var(--s4)}
+}

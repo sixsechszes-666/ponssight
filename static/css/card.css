@@ -1,0 +1,285 @@
+/* The coin card: one panel shared by every table. On a window too narrow to
+   hold it beside the list it is an overlay, and on one wide enough it is a
+   column down the right edge. It is the only thing on the page that floats,
+   so it is the only thing with a shadow - and docked it does not float, so it
+   does not have one. */
+
+.cwrap{
+  position:fixed;inset:0;z-index:50;
+  /* The card can be taller than the window - a busy token has a chart, a
+     holder table and an early-buy list - so the scrim is the scroll
+     container and the card is free to grow inside it. */
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  padding:var(--s6) var(--s5);
+  display:flex;align-items:flex-start;justify-content:center;
+  background:var(--scrim);
+  backdrop-filter:blur(10px);
+  -webkit-backdrop-filter:blur(10px);
+  animation:fade-in var(--dur-2) var(--ease);
+}
+@keyframes fade-in{from{opacity:0}to{opacity:1}}
+
+.ccard{
+  width:100%;max-width:1040px;
+  background:var(--bg-1);
+  border:1px solid var(--line-2);
+  border-radius:var(--r-lg);
+  box-shadow:var(--shadow-pop);
+  overflow:hidden;
+  animation:card-in var(--dur-3) var(--ease);
+}
+@keyframes card-in{
+  from{opacity:0;transform:translateY(8px) scale(.995)}
+  to{opacity:1;transform:none}
+}
+
+/* ------------------------------------------------------------- header */
+.chd{
+  display:flex;align-items:center;gap:var(--s4);
+  padding:var(--s4) var(--s5);
+  border-bottom:1px solid var(--line-2);
+  /* Sticks to the top of the scrim while the sections scroll past, so the
+     name of the token you are reading never leaves the screen. */
+  position:sticky;top:0;z-index:5;
+  background:var(--bg-1);
+  flex-wrap:wrap;
+}
+/* The one place a token gets a real headline: it is the subject of everything
+   below it. */
+.chd .nm{font-size:var(--t-lg);max-width:none}
+.chd .tok{gap:var(--s4)}
+
+/* The address, the badges and the pair: one rank of mono under the name. */
+.cmeta{
+  display:flex;align-items:center;gap:var(--s3);flex-wrap:wrap;
+  font-family:var(--mono);font-size:var(--t-micro);
+  color:var(--dim);
+}
+.cmeta .badge{height:18px}
+
+/* The header's link row carries the token's own socials, the copy button and
+   three venue chips. On a narrow card that is more than one line, and a row
+   that cannot wrap pushes the close button off the edge instead. */
+.chd .links{flex-wrap:wrap;justify-content:flex-end}
+
+.cclose{
+  background:transparent;border-color:var(--line-2);color:var(--dim);
+  height:28px;padding:0 var(--s3);
+  font-family:var(--mono);font-size:var(--t-micro);
+  letter-spacing:.08em;text-transform:uppercase;
+}
+.cclose:hover{background:var(--wash-2);border-color:var(--line-3);color:var(--txt)}
+
+/* ----------------------------------------------------------- sections */
+.csec{
+  padding:var(--s5);
+  border-bottom:1px solid var(--line);
+}
+.csec:last-child{border-bottom:none}
+
+/* The heading row. A section title on the left, its own controls on the
+   right, on one baseline. */
+.csec-hd{
+  display:flex;align-items:center;gap:var(--s3);
+  margin-bottom:var(--s4);
+  min-height:26px;
+}
+.csec-hd h2{flex:none}
+
+/* A section that is itself a finding - the snipe verdict - carries the same
+   leading accent the table row does, so the verdict looks the same in both
+   places. Mirrors tbody tr.snip rather than restyling it. */
+/* The card snipe section carries the same marking as the table row it was
+   opened from, so the thing that was clicked and the thing that opened read
+   as one object. */
+.csec.snip[data-lb=sniped]{
+  background-image:linear-gradient(90deg,
+    var(--tint-sniped) 0,var(--tint-sniped-2) 34%,transparent 70%);
+}
+.csec.snip[data-lb=sniped].hi{
+  background-image:linear-gradient(90deg,
+    var(--tint-sniped-hi) 0,var(--tint-sniped-hi-2) 34%,transparent 70%);
+}
+.csec.snip[data-lb=bundled]{
+  background-image:linear-gradient(90deg,
+    var(--tint-bundled) 0,var(--tint-bundled-2) 34%,transparent 70%);
+}
+.csec.snip{box-shadow:inset 3px 0 0 var(--warn)}
+.csec.snip[data-lb=bundled]{box-shadow:inset 3px 0 0 var(--neg)}
+
+.cempty{
+  padding:var(--s6) var(--s4);
+  text-align:center;
+  font-family:var(--mono);font-size:var(--t-sm);
+  color:var(--dim-2);
+}
+.cempty.err{color:var(--warn)}
+
+/* ---------------------------------------------------------- skeleton */
+/* Four bars in the shape of what is coming: a header line, a short one, the
+   chart block, then the text. The card is the same height whether it is
+   loading or loaded, so opening one never makes the page jump. */
+.cskel{display:flex;flex-direction:column;gap:var(--s3)}
+.sk{
+  background:var(--bg-2);
+  border-radius:var(--r-sm);
+  animation:pulse 1.5s var(--ease) infinite;
+}
+.sk.h{height:20px;width:52%}
+.sk.s{height:12px;width:32%}
+.sk.c{height:200px;width:100%}
+.sk.t{height:96px;width:100%}
+
+@media (max-width:700px){
+  .cwrap{padding:0}
+  .ccard{max-width:none;border:none;border-radius:0;min-height:100vh}
+  .chd{padding:var(--s3) var(--s4)}
+  .csec{padding:var(--s4)}
+}
+
+/* --------------------------------------------------------------- the dock */
+/* From 2124px the panel is a column down the right edge of the page and the
+   table it was opened from stays live beside it. That number is derived, not
+   chosen: it is the narrowest window in which the widened page still gives
+   every table all of its columns, and the arithmetic is written out in
+   shell.css beside the rule that widens the page. It is repeated here and in
+   coin.js because a media query cannot read a custom property, so the three
+   places cannot share one constant - the comment is the only thing that can.
+
+   Three declarations are load-bearing and the rest is furniture:
+
+   - the wrapper stops painting the scrim and stops taking pointer events. It
+     still spans the window, so without `pointer-events:none` it would eat every
+     click on the page behind it and the table would look live while being dead.
+   - the wrapper keeps `position:fixed`, so the panel does not scroll away with
+     the table it belongs to.
+   - the panel becomes the scroll container. That is the change the sticky
+     header has been waiting for since it was written: until now the scrim was
+     the scroller and the header stuck to a box the card never scrolled.
+
+   The right offset mirrors the page's own centring rather than hugging the
+   window. Flush to the window edge the panel would sit hundreds of pixels away
+   from the table at 3440, on the far side of the margin the page is centred
+   in; this puts its outer edge on the page's outer edge. The `max` is the
+   clamp for the widths just under the threshold, where the page is no longer
+   1904 wide and the offset would otherwise go negative. */
+@media (min-width:2124px){
+  .cwrap{
+    top:var(--bar-h);
+    right:max(var(--s5),
+      calc((100vw - var(--rail-w) - var(--page-max) - var(--dock-w) - var(--s5)) / 2));
+    bottom:0;
+    left:auto;
+    width:var(--dock-w);
+    display:block;
+    padding:0;
+    background:none;
+    backdrop-filter:none;
+    -webkit-backdrop-filter:none;
+    pointer-events:none;
+    animation:none;
+  }
+  .ccard{
+    pointer-events:auto;
+    max-width:none;
+    height:100%;
+    overflow-y:auto;
+    overscroll-behavior:contain;
+    /* A column, not a card: one rule between it and the page, the same way the
+       rail has one rule between it and the page on the other side. No shadow,
+       because nothing here floats - and no radius, because the column runs the
+       full height of the window. */
+    border:none;
+    border-left:1px solid var(--line-2);
+    border-radius:0;
+    box-shadow:none;
+  }
+  /* Tighter than the overlay's gutters. The panel is 480 wide where the
+     overlay is 1040, and the sections inside it are read in a column rather
+     than across. */
+  .chd{padding:var(--s3) var(--s4);gap:var(--s3)}
+  .csec{padding:var(--s4)}
+}
+
+/* ------------------------------------------------- the x profile card
+   One account, drawn from what X says about it. It sits on the Handles tab
+   above the verdict that tab already gave, and it is a card in the same sense
+   the coin card is: a header with a picture, a row of figures, then the body.
+   Nothing here is coloured - an account is not a gain or a loss - so the only
+   token used beyond the surfaces is the dim family, and the launch verdict
+   underneath keeps the pills it already had. */
+
+.xprof{
+  border:1px solid var(--line);
+  border-radius:var(--r-md);
+  background:var(--bg-1);
+  overflow:hidden;              /* the banner is clipped by the corner */
+  margin:var(--s4) 0;
+}
+/* The banner is a background rather than an img so it can be cropped to a band
+   without letterboxing. Hidden outright when the account has none, because an
+   empty strip reads as a picture that failed to load. */
+.xban{
+  height:96px;
+  background:var(--bg-2) center/cover no-repeat;
+  border-bottom:1px solid var(--line);
+}
+.xhd{display:flex;gap:var(--s4);padding:var(--s4)}
+.xav{
+  width:64px;height:64px;flex:0 0 auto;
+  border-radius:var(--r-full);
+  overflow:hidden;
+  background:var(--bg-2);
+  border:1px solid var(--line-2);
+  /* pulled up over the banner, which is the shape every social profile has
+     and the reason the picture is not just another figure in the row */
+  margin-top:-34px;
+}
+.xav img{width:100%;height:100%;object-fit:cover;display:block}
+.xwho{min-width:0;flex:1 1 auto}
+.xnm{display:flex;align-items:baseline;gap:var(--s2);flex-wrap:wrap}
+.xnm span:first-child{font-size:var(--t-lg);font-weight:600;color:var(--txt)}
+.xhd2{font-family:var(--mono);font-size:var(--t-sm);color:var(--dim)}
+.xstats{display:flex;flex-wrap:wrap;gap:var(--s4);margin-top:var(--s2)}
+.xn{display:flex;align-items:baseline;gap:var(--s1)}
+.xn i{
+  font-style:normal;font-family:var(--mono);font-size:var(--t-micro);
+  letter-spacing:var(--track-label);text-transform:uppercase;color:var(--dim);
+}
+.xn b{font-family:var(--mono);font-size:var(--t-md);font-weight:600;color:var(--txt-2)}
+.xbio{
+  margin-top:var(--s3);color:var(--txt-2);font-size:var(--t-sm);
+  white-space:pre-wrap;word-break:break-word;
+}
+.xlinks{display:flex;flex-wrap:wrap;gap:var(--s3);margin-top:var(--s3)}
+.xlinks a{font-family:var(--mono);font-size:var(--t-sm);color:var(--info);text-decoration:none}
+.xlinks a[hidden]{display:none}
+.xlinks a:hover{text-decoration:underline}
+
+/* ------------------------------------------------------ the followings list
+   One row per account this person follows, with the launch verdict the tab
+   exists to give. The list is appended to a hundred at a time while it is
+   still being parsed, so nothing in here may depend on knowing the whole
+   list - no widths from a count, no zebra that shifts, no sticky footer. */
+
+.fhead{margin-top:var(--s5)}
+.fhead .hint{margin:var(--s2) 0}
+/* The sentinel is the scroll target, so it has to have height when it is the
+   last thing on the page - an empty div with no box would never intersect. */
+.fsent{
+  min-height:var(--s6);
+  display:flex;align-items:center;justify-content:center;
+  color:var(--dim);font-family:var(--mono);font-size:var(--t-micro);
+  letter-spacing:var(--track-label);text-transform:uppercase;
+}
+.fsent[hidden]{display:none}
+/* The avatar in a list row: the same picture as the card's, at the size a
+   table row can carry. */
+.fav{
+  width:24px;height:24px;flex:0 0 auto;
+  border-radius:var(--r-full);
+  object-fit:cover;background:var(--bg-2);
+  border:1px solid var(--line);
+}
+.fav.ph{display:block}

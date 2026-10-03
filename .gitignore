@@ -1,0 +1,34 @@
+# The database, the logo cache and the pinned images. This repository ships
+# code and a seeder, never a dataset: data/ is what a running instance fills
+# in for itself, and a fresh clone builds its own by walking the chain.
+data/
+
+# Logs, and the write-ahead journal's sidecars.
+*.log
+*.db
+*.db-wal
+*.db-shm
+
+# Python.
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# The X session. The optional X client reads AUTH_TOKEN and ct0 out of a .env
+# or out of the bot project's environment; neither belongs in a repository.
+.env
+.env.*
+!.env.example
+config.local.json
+
+# Session material from anything else that talks to X.
+session.json
+*_following.*
+cookies*.json
+
+# The screenshot harness's browser profile. It lives in the system temp
+# directory now, but a profile is a few thousand files of cache and cookies,
+# and one that lands next to the screenshots must never be committable.
+_chromeprof/

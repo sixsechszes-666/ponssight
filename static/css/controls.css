@@ -1,0 +1,264 @@
+/* Every control on the page: the toolbar row, the fields inside it, the four
+   button weights, the badges, and the two segmented controls.
+
+   There are exactly four button weights and they mean different things:
+   .b-p is the one action a panel is for, .b-d spends money, .ghost is
+   everything else, and a bare button is the quiet default. */
+
+/* -------------------------------------------------------------- fields */
+input,select,textarea,button{font:inherit;color:inherit}
+
+input,select,textarea{
+  appearance:none;
+  background:var(--bg-2);
+  border:1px solid var(--line-2);
+  border-radius:var(--r-md);
+  color:var(--txt);
+  font-size:var(--t-sm);
+  padding:0 var(--s3);
+  /* A control is one height everywhere - in the toolbar, in a form, in a
+     dialog - and it is a token because it used to be `--s6`, which is also a
+     padding, a min-height and a gutter in ten other rules that want 32px and
+     are right to. */
+  height:var(--ctl-h);
+  transition:border-color var(--dur-1) var(--ease),
+             background-color var(--dur-1) var(--ease);
+}
+input:hover,select:hover,textarea:hover{border-color:var(--line-3)}
+input:focus,select:focus,textarea:focus{
+  outline:none;
+  border-color:var(--line-3);
+  background:var(--bg-3);
+}
+input:focus-visible,select:focus-visible,textarea:focus-visible{
+  outline:none;
+  border-color:var(--txt-2);
+}
+::placeholder{color:var(--dim-2)}
+
+/* A native select draws its own arrow well inside the padding box, which
+   leaves the text sitting under it on a long option. The arrow is drawn here
+   instead, in the same dim the labels use. */
+select{
+  padding-right:var(--s6);
+  background-image:linear-gradient(45deg,transparent 50%,currentColor 50%),
+                   linear-gradient(135deg,currentColor 50%,transparent 50%);
+  background-position:right var(--s4) center,right calc(var(--s4) - 4px) center;
+  background-size:4px 4px,4px 4px;
+  background-repeat:no-repeat;
+  color:var(--txt);
+}
+select option{background:var(--bg-1);color:var(--txt)}
+
+textarea{
+  height:auto;min-height:76px;
+  padding:var(--s3);
+  line-height:1.55;
+  resize:vertical;
+  font-family:var(--mono);font-size:var(--t-sm);
+}
+
+/* A search field is the one thing in a toolbar that grows. */
+input[type=search]{min-width:200px;flex:1 1 200px;max-width:420px}
+input[type=search]::-webkit-search-cancel-button{appearance:none}
+input[type=number]{text-align:right}
+
+/* ------------------------------------------------------------- buttons */
+button{
+  appearance:none;cursor:pointer;
+  background:var(--bg-2);
+  border:1px solid var(--line-2);
+  border-radius:var(--r-md);
+  color:var(--txt-2);
+  font-size:var(--t-sm);font-weight:500;
+  height:var(--ctl-h);
+  padding:0 var(--s4);
+  display:inline-flex;align-items:center;justify-content:center;gap:var(--s2);
+  white-space:nowrap;
+  transition:background-color var(--dur-1) var(--ease),
+             border-color var(--dur-1) var(--ease),color var(--dur-1) var(--ease);
+}
+button:hover{background:var(--bg-3);border-color:var(--line-3);color:var(--txt)}
+button:active{background:var(--bg-3)}
+button:disabled{opacity:.45;cursor:not-allowed;background:var(--bg-2)}
+button:disabled:hover{border-color:var(--line-2);color:var(--txt-2)}
+/* A field disabled because the selected entry point cannot carry it. It is
+   dimmed rather than hidden so the form does not change shape when the toggle
+   moves, and so it is clear the field exists and is simply not in play. */
+input:disabled,select:disabled,textarea:disabled{
+  opacity:.45;cursor:not-allowed;color:var(--dim);
+}
+input:disabled:hover,select:disabled:hover,textarea:disabled:hover{
+  border-color:var(--line-2);
+}
+
+/* The primary. White, because the interface is monochrome and colour is
+   spoken for: a green "Launch" button beside a green profit figure is the
+   exact ambiguity this palette was rebuilt to remove. */
+.b-p{background:var(--txt);border-color:var(--txt);color:var(--bg);font-weight:600}
+.b-p:hover{background:var(--txt-2);border-color:var(--txt-2);color:var(--bg)}
+.b-p:disabled:hover{background:var(--txt);border-color:var(--txt);color:var(--bg)}
+
+/* The destructive one, and the only other filled intent: it spends real money.
+   Text and hairline in the loss colour until hover, then filled - so it reads
+   as dangerous without shouting from a resting table. */
+.b-d{background:transparent;border-color:var(--neg-ln);color:var(--neg)}
+.b-d:hover{background:var(--neg-bg);border-color:var(--neg);color:var(--neg)}
+.b-d:disabled:hover{background:transparent;border-color:var(--neg-ln);color:var(--neg)}
+
+/* Quiet: no box at all until you touch it. Used for the per-row actions,
+   where a bordered button on every row would draw a grid of its own. */
+.ghost{background:transparent;border-color:transparent;color:var(--dim)}
+.ghost:hover{background:var(--wash);border-color:var(--line-2);color:var(--txt)}
+
+/* The one action a panel is for, sized up. It reads as the larger control
+   because a token moved under it, not because it has a colour: there is still
+   exactly one height where a button is bigger than a button. */
+.lg{height:var(--s6);padding:0 var(--s5);font-size:var(--t-md)}
+
+/* ------------------------------------------------------------- toolbar */
+/* One row above every table, holding the fields that filter it. It is a panel
+   and it is sticky: the fields that changed the table below have to stay
+   reachable while that table is being read, and a table this tall is read from
+   the middle downward.
+
+   Sticky under the chrome rather than under the bar, because below 1572px
+   there are two things above it and it has to clear both. 20 puts it above the
+   sticky table header (10) and below the top bar (40) and the overlays. */
+.ctl{
+  position:sticky;top:var(--chrome-h);z-index:20;
+  display:flex;align-items:center;gap:var(--s2);flex-wrap:wrap;
+  padding:var(--s2) var(--s3);
+  background:var(--bg-1);
+  border:1px solid var(--line-2);
+  border-radius:var(--r-lg);
+  box-shadow:inset 0 1px 0 var(--edge);
+  min-width:0;
+}
+/* A label inside a toolbar is 10px of mono, the same as a column heading, so
+   the eye reads the whole row as one rank of text. */
+.ctl > .hint{font-family:var(--mono);font-size:var(--t-micro);
+             letter-spacing:var(--track-label);text-transform:uppercase}
+
+/* --------------------------------------------------------------- check */
+.chk{
+  display:inline-flex;align-items:center;gap:var(--s2);
+  font-size:var(--t-sm);color:var(--dim);cursor:pointer;
+  user-select:none;white-space:nowrap;
+}
+.chk:hover{color:var(--txt-2)}
+.chk input[type=checkbox]{
+  appearance:none;width:14px;height:14px;flex:none;
+  border:1px solid var(--line-3);border-radius:var(--r-sm);
+  background:var(--bg-2);padding:0;
+  transition:background-color var(--dur-1) var(--ease),
+             border-color var(--dur-1) var(--ease);
+}
+.chk input[type=checkbox]:hover{border-color:var(--txt-2)}
+/* The tick is drawn with a rotated border rather than a background image, so
+   there is no asset to 404 and no data uri to keep in sync with the palette. */
+.chk input[type=checkbox]:checked{
+  background:var(--txt);border-color:var(--txt);
+  position:relative;
+}
+.chk input[type=checkbox]:checked::after{
+  content:"";position:absolute;left:4px;top:1px;
+  width:4px;height:8px;
+  border:solid var(--bg);border-width:0 2px 2px 0;
+  transform:rotate(45deg);
+}
+.chk input[type=checkbox]:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+
+.lblchk{display:inline-flex;align-items:center;gap:var(--s3);flex-wrap:wrap}
+
+/* Fixed widths, so a row of inputs in the wallet panel lines up instead of
+   resizing every time a digit is typed. */
+.w-num{width:72px}
+.w-addr{width:340px;font-family:var(--mono);font-size:var(--t-sm)}
+.w-label{width:180px}
+/* A private key is 66 characters of mono and it has to stay on one line: a
+   wrapped key cannot be checked against anything by eye, and the field is
+   typed into once and then never looked at again. */
+.w-key{width:470px;font-family:var(--mono);font-size:var(--t-sm)}
+
+/* --------------------------------------------------------- segmented */
+/* The price-range control on the coin card. Adjacent cells sharing one
+   hairline, which is the only way to get the group to read as one object. */
+.rng{display:inline-flex;border:1px solid var(--line-2);border-radius:var(--r-md);overflow:hidden}
+.rng button{
+  background:transparent;border:none;border-radius:0;
+  height:26px;padding:0 var(--s3);
+  font-family:var(--mono);font-size:var(--t-micro);letter-spacing:.06em;
+  color:var(--dim);
+}
+.rng button + button{border-left:1px solid var(--line-2)}
+.rng button:hover{background:var(--wash);color:var(--txt-2)}
+.rng button.on{background:var(--txt);color:var(--bg);font-weight:600}
+
+/* The per-row expander. Text weight, no box, right-aligned so the column of
+   them lines up on its own edge. */
+.rowbtn{
+  background:none;border:none;height:auto;padding:0;
+  font-family:var(--mono);font-size:var(--t-micro);
+  letter-spacing:.06em;text-transform:uppercase;
+  color:var(--dim);text-decoration:underline;
+  text-decoration-color:var(--line-3);text-underline-offset:3px;
+}
+.rowbtn:hover{background:none;color:var(--txt);text-decoration-color:var(--txt-2)}
+/* Two of these can land in one cell - the sniper leaderboard's `show 12` and
+   `open` do - and `padding:0` on a text-weight control means nothing at all
+   separates them: they measure as one run, `show 12open`, because the two
+   underlines meet end to end and the eye reads the join as one label. The gap
+   is a rule here rather than markup because a cell is a text run and not a
+   flex row, and a literal space between two inline elements is one space wide,
+   which the underline swallows whole. */
+.rowbtn + .rowbtn{margin-left:var(--s3)}
+
+/* The tiny copy chip: an address or a tx hash you can click. Kept inline so
+   it can sit inside a table cell without adding a line. */
+.mini{
+  font-family:var(--mono);font-size:var(--t-micro);
+  color:var(--dim-2);cursor:pointer;
+  border-bottom:1px dashed var(--line-2);
+}
+.mini:hover{color:var(--txt-2);border-bottom-color:var(--line-3)}
+
+/* -------------------------------------------------------------- badges */
+/* A badge is a state readout, never a button, except .go which is the one
+   clickable one. Mono micro on a hairline, no fill: a filled pill in a table
+   of filled pills stops meaning anything. */
+.badge{
+  display:inline-flex;align-items:center;gap:var(--s2);
+  height:20px;padding:0 var(--s2);
+  border:1px solid var(--line-2);border-radius:var(--r-sm);
+  background:var(--bg-1);
+  font-family:var(--mono);font-size:var(--t-micro);
+  letter-spacing:.08em;text-transform:uppercase;
+  color:var(--dim);white-space:nowrap;
+}
+.badge b{font-weight:600;color:var(--txt-2);letter-spacing:0}
+
+/* Alive. The dot is what carries the colour; the text stays neutral so a row
+   of badges does not become a row of coloured words. */
+.badge.ok{color:var(--txt-2)}
+.badge.ok::before{
+  content:"";width:6px;height:6px;border-radius:var(--r-full);
+  background:var(--pos);flex:none;
+  box-shadow:0 0 0 3px var(--pos-bg);
+}
+/* The feed is down. The one badge that is allowed to be loud. */
+.badge.bad{border-color:var(--neg-ln);color:var(--neg)}
+.badge.bad::before{
+  content:"";width:6px;height:6px;border-radius:var(--r-full);
+  background:var(--neg);flex:none;
+}
+/* Clickable. */
+.badge.go{cursor:pointer;color:var(--txt-2);border-color:var(--line-3)}
+.badge.go:hover{background:var(--bg-3);color:var(--txt)}
+
+@media (max-width:560px){
+  .w-addr{width:100%}
+  .w-label{width:100%}
+  .w-key{width:100%}
+  input[type=search]{min-width:0;max-width:none}
+}

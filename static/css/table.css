@@ -1,0 +1,280 @@
+/* The tables. No vertical rules anywhere: a column is separated from the next
+   by space and by the alignment of its own contents, which is what lets eleven
+   columns sit on one screen without a grid drawn around them.
+
+   Each table now sits in a panel rather than straight on the canvas. With rows
+   this tight a hairline under every one of them stops reading as a row boundary
+   and starts reading as texture, and the panel is what says where the list
+   begins and ends. */
+
+.tw{
+  /* The one place the page is allowed to scroll sideways. Everything else
+     wraps, so a narrow window never gets a horizontal scrollbar on the body. */
+  overflow-x:auto;
+  /* The vertical axis is deliberately left alone. Saying visible here reads as
+     "do not clip vertically", but a visible axis beside a non-visible one
+     computes to auto, and clip computes to hidden - so this box is a scroll
+     container vertically whichever of the two is written. That is the fact the
+     sticky header below has to live with.
+
+     A radius on a scroll container is safe: the corner is clipped, which is
+     what a radius means. */
+  margin:0;
+  background:var(--bg-1);
+  /* The panel's edge is a ring rather than a border, and that is arithmetic
+     rather than taste. A border is 2px of the box, and the widest table on the
+     page fits its box by less than that: `--page-max` is a measured 1400
+     because the table needs 1351 of the 1352 the gutters leave it (tokens.css).
+     Spending 2 of those pixels on an edge is what puts a horizontal scrollbar
+     under the Launches table at a 1440 window. A spread shadow follows the same
+     radius, is painted outside the box, and costs the content nothing. */
+  box-shadow:0 0 0 1px var(--line-2);
+  border-radius:var(--r-lg);
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:var(--t-sm);
+  /* The table is the content, so it takes the full width of the spine and
+     never stretches a column to fill space it does not need. */
+  table-layout:auto;
+}
+
+/* --------------------------------------------------------------- header */
+thead th{
+  position:sticky;
+  /* 0, not the bar height. This box is the header's scrollport, so
+     top:var(--bar-h) never meant "clear the top bar" - it meant "sit 52px down
+     inside the table", which is directly on top of the first row. It only
+     started showing once --bar-h became a real token: while the token was
+     being dropped on parse the declaration was invalid and fell back to auto,
+     so the offset silently did nothing.
+     A header that follows the page scroll needs the table to be its own
+     bounded scroll region; until it is, the header belongs at the top of its
+     container and nowhere else. Still under the sticky bar, which is z-index
+     40 against this one's 10. */
+  top:0;
+  z-index:10;
+  /* Opaque, and the same colour as the panel it sits in: the rows scroll
+     beneath this and any alpha would show them through the labels, and a
+     header painted `--bg` would draw a darker band across the top of a
+     `--bg-1` panel, which reads as a foreign strip rather than as its header. */
+  background:var(--bg-1);
+  border-bottom:1px solid var(--line-2);
+  /* The lit edge. A panel on a near-black canvas has nothing catching the
+     light, so its top pixel is raised by six percent of white - which is the
+     whole of the effect, and it is drawn here rather than on `.tw` because
+     `.tw` has no padding and this cell's own background would cover it.
+     Adjacent header cells make the line continuous. */
+  box-shadow:inset 0 1px 0 var(--edge);
+  /* Tight on the horizontal axis, unchanged vertically. Twelve columns
+     of 12px gutters is 288px of empty space, and the column that had to
+     give room to a new one is the label above it - which is where the
+     widest gutter was being spent. */
+  padding:var(--row-pad-y) var(--s2);
+  text-align:left;
+  vertical-align:bottom;
+  font:500 var(--t-micro)/1.2 var(--mono);
+  letter-spacing:var(--track-label);
+  text-transform:uppercase;
+  color:var(--dim);
+  white-space:nowrap;
+}
+/* A column holding a number is headed by a number, so it aligns with the
+   digits under it rather than with the word above them. */
+thead th.num{text-align:right}
+
+/* Sortable columns only, so the cursor appears where a click does something. */
+thead th[data-sort]{cursor:pointer;transition:color var(--dur-1) var(--ease)}
+thead th[data-sort]:hover{color:var(--txt-2)}
+/* The sorted column. Scoped to th here and to .tab in shell.css - a bare .on
+   rule in either file would leak into the other. */
+thead th.on{color:var(--txt)}
+/* The direction arrow, drawn with borders rather than a glyph. A unicode
+   arrow in a content string is three bytes of UTF-8 that the whole toolchain
+   then has to agree about, and this project's console is cp1251. */
+thead th.on::after{
+  content:"";display:inline-block;
+  margin-left:var(--s2);
+  vertical-align:middle;
+  border-left:3px solid transparent;
+  border-right:3px solid transparent;
+  border-top:4px solid var(--dim);
+}
+/* Ascending is the same triangle turned over, which keeps the wedge on the
+   text baseline instead of shifting the label up a pixel. */
+thead th.on[data-sort=oldest]::after{
+  border-top:none;
+  border-bottom:4px solid var(--dim);
+}
+
+/* ----------------------------------------------------------------- rows */
+tbody td{
+  padding:var(--row-pad-y) var(--s2);
+  border-bottom:1px solid var(--line);
+  color:var(--txt-2);
+  vertical-align:middle;
+  transition:background-color var(--dur-1) var(--ease);
+  /* A figure that arrives mid-poll must not reflow the row it lands in. */
+  white-space:nowrap;
+}
+tbody td:first-child{padding-left:var(--s4)}
+tbody td:last-child{padding-right:var(--s4)}
+/* A second fact in a cell whose first fact is a figure - the sniper total says
+   how many of its launches could not be priced - is a footnote, and at the
+   cell's own size and colour it does not read as one: `>= +$184.88` and
+   `151 missing` came out of the markup one space apart, and one space between
+   two runs of the same mono is a figure with a suffix, not two numbers. So the
+   note steps down to the label size, takes a real gap, and is never allowed to
+   break across a line - `151` on one line and `missing` on the next reads as
+   a different number entirely, which is the one thing a footnote must not do. */
+.cellnote{margin-left:var(--s3);font-size:var(--t-micro);white-space:nowrap}
+/* The token cell is the only one allowed to be wide, and it is where the
+   eye lands first, so it carries the strongest text on the row. */
+tbody td:has(.tok){color:var(--txt);min-width:220px}
+tbody td.num{text-align:right}
+
+tbody tr{transition:background-color var(--dur-1) var(--ease)}
+tbody tr:hover td{background:var(--wash)}
+
+/* A marked row: bundled, or sniped by a wallet already known to do it.
+
+   The tint is painted on the row and not on each cell, because a per-cell
+   background restarts at every column edge and eleven of them in a line read
+   as stripes rather than as one marked row. It runs strong at the leading
+   edge and falls away to nothing by four fifths across, so the figures on the
+   right stay on the plain canvas where they are easiest to compare down the
+   column - which is what the row is for, marking or no marking. */
+tbody tr.snip[data-lb=sniped]{
+  background-image:linear-gradient(90deg,
+    var(--tint-sniped) 0,var(--tint-sniped-2) 42%,transparent 80%);
+}
+tbody tr.snip[data-lb=sniped].hi{
+  background-image:linear-gradient(90deg,
+    var(--tint-sniped-hi) 0,var(--tint-sniped-hi-2) 42%,transparent 80%);
+}
+tbody tr.snip[data-lb=bundled]{
+  background-image:linear-gradient(90deg,
+    var(--tint-bundled) 0,var(--tint-bundled-2) 42%,transparent 80%);
+}
+/* The boundary between two marked rows, drawn in the row's own hue. Without
+   it four sniped launches in a row are one amber block, and the leading
+   marker bar runs unbroken down all four as if they were one row. */
+tbody tr.snip[data-lb=sniped] > td{border-bottom-color:var(--tint-line-sniped)}
+tbody tr.snip[data-lb=bundled] > td{border-bottom-color:var(--tint-line-bundled)}
+/* The bar. Three pixels, the full height of the row, and saturated rather
+   than tinted, because it is the mark that has to read on a row the eye is
+   already moving past. The bare .snip rule underneath is the fallback for a
+   row whose label did not arrive: amber and marked beats unmarked. */
+tbody tr.snip > td:first-child{box-shadow:inset 3px 0 0 var(--warn)}
+tbody tr.snip[data-lb=bundled] > td:first-child{box-shadow:inset 3px 0 0 var(--neg)}
+tbody tr.snip .lb{font-weight:600}
+
+/* Hover is left as the generic white wash. It paints on the cell, which is
+   above the row, so the tint stays legible underneath and lifts at the same
+   time - and unlike swapping one gradient for another it is a background
+   colour, which interpolates. */
+tbody tr.snip:hover > td{background:var(--wash)}
+
+/* A row that arrived since the last poll announces itself once, then stops.
+   A permanent tint would mean every visit opened on a screen of highlights. */
+@keyframes row-in{
+  from{background:var(--wash-2)}
+  to{background:transparent}
+}
+tbody tr.new > td{animation:row-in 2.4s var(--ease) forwards}
+
+/* ------------------------------------------------------------ expansion */
+/* The detail row under an expanded sniper. It carries its own hairline and no
+   hover, because it is not a row you can act on. */
+tbody tr.det, tbody tr.det:hover td{background:transparent}
+tbody tr.det > td{
+  padding:0;
+  border-bottom:1px solid var(--line);
+  /* Recessed rather than raised: this is a drawer pulled out of the panel
+     above it, and `--bg-1` here would make it a second panel stacked flush. */
+  background:var(--bg-2);
+  white-space:normal;
+}
+.detin{padding:var(--s4) var(--s4) var(--s5) var(--s6)}
+
+/* ------------------------------------------------------------ wallet rows */
+/* The snipers table opens in place; the open row keeps a marker so a long list
+   scrolled away from its header still says which one is expanded. */
+tbody tr.wrow.open td:first-child{box-shadow:inset 2px 0 0 var(--txt-2)}
+tbody tr.wrow:hover td{background:var(--wash)}
+
+/* One sniper's own page: a launch it bought into and did not win. Dimmed and
+   marked on the left edge rather than hidden behind a filter, because the point
+   of showing them is to see that he is in more launches than he wins. The
+   numbers above the table are computed over the other set, so the two must not
+   look alike. */
+tbody tr.lost > td{color:var(--dim);background:var(--bg-2)}
+tbody tr.lost > td:first-child{box-shadow:inset 2px 0 0 var(--line-3)}
+tbody tr.lost:hover > td{background:var(--wash-2)}
+
+/* The Wallets tab's own list, where a click opens the panel under the table
+   rather than a row inside it. Same marker, and for the same reason: the panel
+   is below the table, so the row it belongs to has to say so from above. */
+tbody tr.on > td:first-child{box-shadow:inset 2px 0 0 var(--txt-2)}
+tbody tr.on:hover td{background:var(--wash)}
+
+/* ------------------------------------------------------ the card's tables */
+/* Inside the coin card the table is already framed by the card, so it loses
+   its own leading edge and tightens up. */
+.ctab{border-collapse:collapse;font-size:var(--t-sm)}
+.ctab thead th{
+  position:static;
+  background:transparent;
+  padding:var(--s2) var(--s3);
+  border-bottom:1px solid var(--line-2);
+  font-size:var(--t-micro);
+}
+.ctab tbody td{padding:var(--s2) var(--s3);border-bottom:1px solid var(--line)}
+.ctab tbody tr:last-child td{border-bottom:none}
+.ctab tbody td:first-child{padding-left:0}
+.ctab tbody td:last-child{padding-right:0}
+
+/* A table with nothing in it does not get a frame. */
+tbody:empty{display:none}
+
+/* A table inside something that is already a panel keeps its rows and gives up
+   its own frame. Two frames around one table is a border drawn twice, and the
+   inner one has no meaning: it is not a second level of anything. This is the
+   rule the old comment about the card's tables was reaching for, written where
+   it covers the wallet modal's tables as well as the card's - the `.box .tw`
+   case was simply missing, and drew the second frame. */
+.csec .tw,
+.box .tw{
+  box-shadow:none;
+  background:none;
+  border-radius:0;
+}
+
+/* The sniper profile, and only it, steps the horizontal gutter down again.
+   It is the one table here with fourteen columns - the leaderboard tables stop
+   at ten - and the two that carry a transaction count per chain were added last,
+   so they are the ones that have to fit. At the shared 8px gutter the row
+   measures 1453px and the box it lives in is 1352 wide at a 1680 window, which
+   puts Followers off the right edge; a table that has to be scrolled sideways
+   to read a column that was already there is worse than a tight gutter.
+   4px a side is 112px back, which closes it with room to spare.
+
+   Scoped to #sp-wrap rather than changed on `thead th` above, because that rule
+   is shared with every other table on the page and only this one ran out of
+   width. An id beats the max-width:900px override below, so the narrow-window
+   case keeps the tighter gutter - which is the direction it wanted anyway. */
+#sp-wrap thead th,
+#sp-wrap tbody td{padding-left:var(--s1);padding-right:var(--s1)}
+
+@media (max-width:900px){
+  /* Only the outer gutter moves. The vertical padding used to be tightened
+     here as well, back when it was a literal 12px on this rule and this rule's
+     counterpart above; now that both read `--row-pad-y` there is nothing left
+     for a narrow window to do to it - a row is the same height at 400px as at
+     1680, which is the point of the token. What a narrow window does need is
+     the 16px end gutters back, because at 400px they are 4% of the table. */
+  tbody td:first-child{padding-left:var(--s3)}
+  tbody td:last-child{padding-right:var(--s3)}
+}

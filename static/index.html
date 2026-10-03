@@ -1,0 +1,917 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta name="description" content="Live mirror of the pons launchpad on Robinhood Chain">
+<title>Pons Sight</title>
+<!-- One sheet per concern, linked separately rather than @imported: a sheet
+     that fails to parse then takes only its own rules down. Order matters -
+     tokens first, and later sheets lean on earlier ones for defaults. -->
+<link rel="stylesheet" href="/static/css/tokens.css">
+<link rel="stylesheet" href="/static/css/base.css">
+<link rel="stylesheet" href="/static/css/shell.css">
+<link rel="stylesheet" href="/static/css/controls.css">
+<link rel="stylesheet" href="/static/css/table.css">
+<link rel="stylesheet" href="/static/css/cells.css">
+<link rel="stylesheet" href="/static/css/stats.css">
+<link rel="stylesheet" href="/static/css/card.css">
+<link rel="stylesheet" href="/static/css/modal.css">
+<link rel="stylesheet" href="/static/css/chart.css">
+<link rel="stylesheet" href="/static/css/forms.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<!-- One bar: identity and the state of the feed, with nothing between them.
+     The sections used to be a third thing on this line, which is what put
+     eleven labels and four badges in a race for the same pixels. They are a
+     rail now, down the left edge from 1572px up and back under this bar as a
+     strip below that. -->
+<header class="topbar">
+  <div class="bwrap">
+    <a class="brand" href="#launches" aria-label="Pons Sight, go to launches">
+      <i class="mark" aria-hidden="true"></i>Pons<b>Sight</b></a>
+
+    <span class="grow"></span>
+
+    <div class="status">
+      <span class="badge ok" id="b-live">live</span>
+      <span class="badge">block <b id="b-block">-</b></span>
+      <span class="badge" id="b-lat">-</span>
+      <!-- The connect widget. A dot for the state, a label for the address,
+           and one click to the picker. -->
+      <button id="w-open" title="connect a wallet"><span id="w-open-v">connect</span></button>
+      <span class="inline" id="poll-ctl">
+        <select id="every" aria-label="refresh interval"
+                title="how often the active tab re-reads the API">
+          <option value="1000">1s</option>
+          <option value="2000">2s</option>
+          <option value="3000">3s</option>
+          <option value="5000" selected>5s</option>
+          <option value="10000">10s</option>
+          <option value="0">paused</option>
+        </select>
+        <button class="ghost" id="refresh" title="re-read the active tab now">refresh</button>
+      </span>
+    </div>
+  </div>
+</header>
+
+<!-- The sections, outside the bar. That is a requirement rather than a tidy
+     arrangement: `.topbar` carries a `backdrop-filter`, and a filtered element
+     becomes the containing block for any `position:fixed` descendant, so a rail
+     left inside the header would measure itself against a 48px-tall bar instead
+     of against the window. Out here it is a sibling of the page, which is also
+     what lets it sit beside the content rather than above it. -->
+<nav class="tabs" role="tablist" aria-label="Sections">
+  <button class="tab" role="tab" aria-selected="false" data-tab="launches"
+          aria-keyshortcuts="1" title="Launches (1)">Launches</button>
+  <button class="tab" role="tab" aria-selected="false" data-tab="volume"
+          aria-keyshortcuts="2" title="Volume (2)">Volume</button>
+  <button class="tab" role="tab" aria-selected="false" data-tab="sniped"
+          aria-keyshortcuts="3" title="Sniped (3)">Sniped</button>
+  <button class="tab" role="tab" aria-selected="false" data-tab="snipers"
+          aria-keyshortcuts="4" title="Snipers (4)">Snipers</button>
+  <button class="tab" role="tab" aria-selected="false" data-tab="handles"
+          aria-keyshortcuts="5" title="Handles (5)">Handles</button>
+  <button class="tab" role="tab" aria-selected="false" data-tab="copy"
+          aria-keyshortcuts="6" title="Copy (6)">Copy</button>
+  <button class="tab" role="tab" aria-selected="false" data-tab="create"
+          aria-keyshortcuts="7" title="Create (7)">Create</button>
+  <button class="tab" role="tab" aria-selected="false" data-tab="wallet"
+          aria-keyshortcuts="8" title="Wallet (8)">Wallet</button>
+  <button class="tab" role="tab" aria-selected="false" data-tab="wallets"
+          aria-keyshortcuts="9" title="Wallets (9)">Wallets</button>
+  <button class="tab" role="tab" aria-selected="false" data-tab="sniper"
+          aria-keyshortcuts="0" title="Sniper (0)">Sniper</button>
+</nav>
+
+<main class="page" id="main">
+
+<!-- ------------------------------------------------------------- launches -->
+<section id="p-launches" data-panel="launches" role="tabpanel" aria-label="Launches">
+  <!-- The four numbers the tab is about, at the size they deserve. These used
+       to be 11px pills in the header, which is a strange place to whisper the
+       headline. -->
+  <div class="hero">
+    <div class="stat"><span class="k">launches 1h</span><span class="v" id="b-1h">-</span></div>
+    <div class="stat"><span class="k">launches 24h</span><span class="v" id="b-24h">-</span></div>
+    <div class="stat"><span class="k">indexed</span><span class="v" id="b-total">-</span></div>
+    <div class="stat"><span class="k">ether</span><span class="v" id="b-eth">-</span></div>
+  </div>
+
+  <div class="ctl">
+    <input type="search" id="q" placeholder="search name / symbol / address / x handle / deployer"
+           aria-label="search launches">
+    <select id="sort" aria-label="sort launches">
+      <option value="newest">Newest</option>
+      <option value="oldest">Oldest</option>
+      <option value="mcap">Market cap</option>
+      <option value="progress">Graduation progress</option>
+      <option value="volume">Volume</option>
+      <option value="snipe">Snipe score</option>
+    </select>
+    <select id="quote" aria-label="filter by pair">
+      <option value="">All pairs</option>
+      <option value="ETH">ETH</option>
+      <option value="USDG">USDG</option>
+    </select>
+    <label class="chk"><input type="checkbox" id="hidegrad"> hide graduated</label>
+    <label class="chk"><input type="checkbox" id="fresh"> last 30m only</label>
+    <label class="chk" title="hide tokens whose only buyer is the wallet that launched them"><input type="checkbox" id="devonly"> hide dev-only</label>
+    <label class="chk" title="show only launches whose buys and sells add up to at least this many dollars">min vol $
+      <input type="number" id="minvol" min="0" step="100" placeholder="any"
+             class="w-num"></label>
+    <span class="grow"></span>
+    <span class="badge" id="l-count">-</span>
+  </div>
+
+  <div class="tw">
+    <table>
+      <thead>
+        <tr>
+          <th class="num">#</th>
+          <th data-sort="newest">Token</th>
+          <th data-sort="oldest" style="width:74px">Age</th>
+          <th style="width:62px">Pair</th>
+          <th data-sort="snipe" style="width:78px">Snipe</th>
+          <th data-sort="volume" style="width:96px">Volume</th>
+          <th data-sort="progress" style="width:118px">Graduation</th>
+          <th data-sort="mcap" style="width:100px">MCap</th>
+          <th style="width:98px">MCap USD</th>
+          <th style="width:112px">Creator fees</th>
+          <th style="width:178px">Links</th>
+          <th style="width:92px">Deployer</th>
+        </tr>
+      </thead>
+      <tbody id="tb"></tbody>
+    </table>
+  </div>
+  <div class="empty" id="l-empty" hidden>no launches match</div>
+</section>
+
+<!-- --------------------------------------------------------------- volume -->
+<section id="p-volume" data-panel="volume" role="tabpanel" aria-label="Volume" hidden>
+  <div class="hero" id="v-summary"></div>
+
+  <div class="ctl">
+    <span class="hint">window</span>
+    <select id="v-window" aria-label="volume window">
+      <option value="5m">5m</option>
+      <option value="1h" selected>1h</option>
+      <option value="6h">6h</option>
+      <option value="24h">24h</option>
+      <option value="all">all</option>
+    </select>
+    <select id="v-sort" aria-label="sort volume">
+      <option value="volume">by volume</option>
+      <option value="buys">by buys</option>
+      <option value="sells">by sells</option>
+      <option value="net">by net quote</option>
+      <option value="newest">by newest</option>
+    </select>
+    <input type="search" id="v-q" placeholder="search name / symbol / address"
+           aria-label="search volume">
+    <select id="v-quote" aria-label="filter by pair">
+      <option value="">All pairs</option>
+      <option value="ETH">ETH</option>
+      <option value="USDG">USDG</option>
+    </select>
+    <label class="chk"><input type="checkbox" id="v-hidegrad"> hide graduated</label>
+    <span class="grow"></span>
+    <span class="badge" id="v-count">-</span>
+  </div>
+
+  <div class="tw">
+    <table>
+      <thead>
+        <tr>
+          <th class="num">#</th>
+          <th>Token</th>
+          <th style="width:74px">Age</th>
+          <th style="width:62px">Pair</th>
+          <th style="width:96px">Volume USD</th>
+          <th style="width:100px">Volume</th>
+          <th style="width:62px">Buys</th>
+          <th style="width:62px">Sells</th>
+          <th style="width:92px">Net</th>
+          <th style="width:66px">Buyers</th>
+          <th style="width:78px">Last</th>
+          <th style="width:98px">MCap USD</th>
+          <th style="width:118px">Graduation</th>
+          <th style="width:78px">Snipe</th>
+          <th style="width:60px"></th>
+        </tr>
+      </thead>
+      <tbody id="v-tb"></tbody>
+    </table>
+  </div>
+  <div class="empty" id="v-empty" hidden>no trades in this window</div>
+</section>
+
+<!-- --------------------------------------------------------------- sniped -->
+<section id="p-sniped" data-panel="sniped" role="tabpanel" aria-label="Sniped" hidden>
+  <div class="hero" id="sn-stats"></div>
+
+  <div class="ctl">
+    <span class="hint">labels</span>
+    <span class="lblchk">
+      <label class="chk"><input type="checkbox" id="sn-lb-bundled" checked> bundled</label>
+      <label class="chk"><input type="checkbox" id="sn-lb-sniped" checked> sniped</label>
+      <label class="chk"><input type="checkbox" id="sn-lb-early"> early</label>
+    </span>
+    <select id="sn-sort" aria-label="sort sniped">
+      <option value="score">by snipe score</option>
+      <option value="delta">by delta blocks</option>
+      <option value="volume">by volume</option>
+      <option value="newest">by newest</option>
+    </select>
+    <label class="chk"><input type="checkbox" id="sn-bots"> only bots</label>
+    <label class="chk">max delta
+      <input type="number" id="sn-maxdelta" min="0" step="1" placeholder="any"
+             class="w-num"></label>
+    <input type="search" id="sn-q" placeholder="search name / symbol / address"
+           aria-label="search sniped">
+    <select id="sn-quote" aria-label="filter by pair">
+      <option value="">All pairs</option>
+      <option value="ETH">ETH</option>
+      <option value="USDG">USDG</option>
+    </select>
+    <span class="grow"></span>
+    <span class="badge" id="sn-count">-</span>
+  </div>
+
+  <div class="box" id="sn-dist">
+    <h2>snipe label distribution - every indexed launch, not just the rows below</h2>
+    <div class="stack" id="sn-stack"><i class="ph"></i></div>
+    <div class="legend" id="sn-legend"></div>
+  </div>
+
+  <div class="tw">
+    <table>
+      <thead>
+        <tr>
+          <th class="num">#</th>
+          <th>Token</th>
+          <th style="width:74px">Age</th>
+          <th style="width:72px">Delta</th>
+          <th style="width:180px">First buyer</th>
+          <th style="width:100px">First buy</th>
+          <th style="width:74px">Share</th>
+          <th style="width:72px">Early</th>
+          <th style="width:74px">Hits</th>
+          <th style="width:56px">Bot</th>
+          <th style="width:96px">Volume</th>
+          <th style="width:60px"></th>
+        </tr>
+      </thead>
+      <tbody id="sn-tb"></tbody>
+    </table>
+  </div>
+  <div class="empty" id="sn-empty" hidden>no launches carry these labels</div>
+</section>
+
+<!-- -------------------------------------------------------------- snipers -->
+<section id="p-snipers" data-panel="snipers" role="tabpanel" aria-label="Snipers" hidden>
+  <div class="hero" id="sw-stats"></div>
+
+  <div class="ctl">
+    <select id="sw-sort" aria-label="sort snipers">
+      <option value="hits">by lifetime hits</option>
+      <option value="recent">by most recent</option>
+      <option value="address">by address</option>
+    </select>
+    <label class="chk">min hits
+      <input type="number" id="sw-minhits" min="1" step="1" value="1" class="w-num"></label>
+    <span class="hint">5 or more is a repeat first buyer</span>
+    <span class="hint">launches per wallet</span>
+    <select id="sw-per" aria-label="launches listed per wallet">
+      <option value="12" selected>12</option>
+      <option value="25">25</option>
+      <option value="50">50</option>
+      <option value="0">none</option>
+    </select>
+    <span class="grow"></span>
+    <span class="badge" id="sw-count">-</span>
+  </div>
+
+  <div id="sw-msg" class="mt2"></div>
+  <div class="box">
+    <h2>reading these numbers</h2>
+    <div class="hint" id="sw-note">-</div>
+  </div>
+
+  <div class="tw">
+    <table>
+      <thead>
+        <tr>
+          <th class="num">#</th>
+          <th>Wallet</th>
+          <th style="width:62px">Bot</th>
+          <th style="width:84px">Hits</th>
+          <th style="width:92px">Last seen</th>
+          <th style="width:132px">Spent</th>
+          <th style="width:124px">Profit</th>
+          <th style="width:118px">First into</th>
+        </tr>
+      </thead>
+      <tbody id="sw-tb"></tbody>
+    </table>
+  </div>
+  <div class="empty" id="sw-empty" hidden>no wallets match</div>
+</section>
+
+<!-- ----------------------------------------------------------------- copy -->
+<!-- ------------------------------------------------------------ handles -->
+<!-- A lookup, not a feed: this is the one panel that is empty until it is
+     asked something, and the one whose answer is bounded by how far the launch
+     index reaches rather than by a filter. -->
+<section id="p-handles" data-panel="handles" role="tabpanel" aria-label="Handles" hidden>
+  <div class="hero" id="h-summary"></div>
+  <div class="hint mt2" id="h-note"></div>
+
+  <div class="ctl">
+    <input type="search" id="h-q" autocomplete="off"
+           placeholder="x handle, @handle or profile url"
+           aria-label="handle to check">
+    <button id="h-go" title="check this handle">check</button>
+    <span class="grow"></span>
+    <span class="badge" id="h-count">-</span>
+  </div>
+
+  <!-- Who the handle belongs to. Separate from the verdict above it on purpose:
+       the verdict comes from the local index and answers with no network at all,
+       this comes from X and can be down or rate limited. One failing must not
+       take the other off the screen. -->
+  <div class="xprof" id="h-prof" hidden>
+    <div class="xban" id="h-ban"></div>
+    <div class="xhd">
+      <div class="xav" id="h-av"></div>
+      <div class="xwho">
+        <div class="xnm"><span id="h-pname"></span>
+          <span class="xhd2" id="h-phandle"></span></div>
+        <div class="xstats" id="h-pnums"></div>
+        <div class="xbio" id="h-pbio"></div>
+        <div class="xlinks">
+          <a id="h-plink" target="_blank" rel="noopener noreferrer"></a>
+          <a id="h-psite" target="_blank" rel="noopener noreferrer"></a>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="hint" id="h-xnote" hidden></div>
+
+  <!-- The followings list. It is drawn from the database and not from the walk,
+       so a page that arrived is on screen immediately and a reload puts back
+       whatever was already parsed without asking X again. -->
+  <div class="fhead" id="h-fhead" hidden>
+    <div class="ctl">
+      <button id="h-fgo" title="parse this account's followings">load followings</button>
+      <button id="h-fstop" class="dim" hidden title="stop after the page in flight">stop</button>
+      <!-- Two keys, applied in this order. The server orders the whole list and
+           only then cuts the page, so the first row here is the first row of the
+           list rather than the first of the hundred already downloaded. Both are
+           disabled while the walk is running - a sorted view over a set that is
+           still being written ranks people against rows that had not arrived. -->
+      <select id="h-fsort" aria-label="sort this list by">
+        <option value="" selected>as parsed</option>
+        <option value="followers_desc">followers, most</option>
+        <option value="followers_asc">followers, fewest</option>
+        <option value="launches_desc">launches, most</option>
+        <option value="launches_asc">launches, fewest</option>
+        <option value="deployers_desc">deployers, most</option>
+        <option value="deployers_asc">deployers, fewest</option>
+      </select>
+      <select id="h-fsort2" aria-label="then sort by">
+        <option value="" selected>then nothing</option>
+        <option value="followers_desc">followers, most</option>
+        <option value="followers_asc">followers, fewest</option>
+        <option value="launches_desc">launches, most</option>
+        <option value="launches_asc">launches, fewest</option>
+        <option value="deployers_desc">deployers, most</option>
+        <option value="deployers_asc">deployers, fewest</option>
+      </select>
+      <button id="h-fall" class="dim" title="load every stored row, not just the first hundred">show all</button>
+      <span class="grow"></span>
+      <span class="badge" id="h-fprog">-</span>
+    </div>
+    <div class="hint" id="h-fnote" hidden></div>
+    <div class="tw" id="h-fwrap" hidden>
+      <table>
+        <thead>
+          <tr>
+            <th class="num">#</th>
+            <th>Account</th>
+            <th style="width:92px">Followers</th>
+            <th style="width:92px">Following</th>
+            <th style="width:150px">Launched</th>
+            <th style="width:150px">Top token</th>
+          </tr>
+        </thead>
+        <tbody id="h-ftb"></tbody>
+      </table>
+    </div>
+    <div id="h-fsent" class="fsent" hidden></div>
+    <div class="empty" id="h-fempty" hidden></div>
+  </div>
+
+  <div class="tw">
+    <table>
+      <thead>
+        <tr>
+          <th class="num">#</th>
+          <th>Token</th>
+          <th style="width:74px">Age</th>
+          <th style="width:62px">Pair</th>
+          <th style="width:78px">Snipe</th>
+          <th style="width:96px">Volume</th>
+          <th style="width:118px">Graduation</th>
+          <th style="width:100px">MCap</th>
+          <th style="width:98px">MCap USD</th>
+          <th style="width:190px">Claim</th>
+          <th style="width:92px">Deployer</th>
+        </tr>
+      </thead>
+      <tbody id="h-tb"></tbody>
+    </table>
+  </div>
+  <div class="empty" id="h-empty" hidden></div>
+</section>
+
+<section id="p-copy" data-panel="copy" role="tabpanel" aria-label="Copy" hidden>
+  <div class="box" id="c-picker">
+    <h2>pick a source token</h2>
+    <div class="inline">
+      <input type="search" id="c-q" placeholder="search name / symbol / address"
+             aria-label="search for a source token">
+      <button id="c-search">search</button>
+      <button class="ghost" id="c-blank"
+              title="draft a plan without a source token">start blank</button>
+      <span class="hint" id="c-q-note">reads GET /api/tokens</span>
+    </div>
+    <div id="c-results"></div>
+    <h2 class="mt4">saved plans</h2>
+    <div id="c-plans"></div>
+  </div>
+
+  <div class="box" id="c-src" hidden>
+    <div class="inline">
+      <span class="hint">source</span>
+      <span class="mono" id="c-src-v">-</span>
+      <span class="grow"></span>
+      <button class="ghost" id="c-change" title="go back to the picker">change source</button>
+    </div>
+  </div>
+
+  <div id="c-form-wrap" hidden>
+    <div class="box">
+      <h2>token fields</h2>
+      <div class="grid">
+        <label class="f"><span>name</span><input id="f-name" autocomplete="off"></label>
+        <label class="f"><span>symbol</span><input id="f-symbol" autocomplete="off"></label>
+        <label class="f"><span>logo uri</span><input id="f-logo" autocomplete="off"></label>
+        <label class="f"><span>twitter</span><input id="f-twitter" autocomplete="off"></label>
+        <label class="f"><span>telegram</span><input id="f-telegram" autocomplete="off"></label>
+        <label class="f"><span>discord</span><input id="f-discord" autocomplete="off"></label>
+        <label class="f"><span>website</span><input id="f-website" autocomplete="off"></label>
+        <label class="f"><span>farcaster</span><input id="f-farcaster" autocomplete="off"></label>
+      </div>
+      <label class="f mt3"><span>description</span>
+        <textarea id="f-description"></textarea></label>
+    </div>
+
+    <div class="box">
+      <h2>launch parameters</h2>
+      <div class="grid">
+        <label class="f"><span>sign with</span><select id="f-signer"></select></label>
+        <label class="f"><span>creator fee recipient</span>
+          <input id="f-recipient" autocomplete="off" placeholder="0x..."></label>
+        <label class="f"><span>creator tax bps <b class="bps" id="f-tax-pct">2%</b></span>
+          <input id="f-tax" type="number" min="0" step="1" value="200"></label>
+        <label class="f"><span>launch config id</span>
+          <input id="f-config" type="number" min="0" step="1" value="0"></label>
+        <label class="f"><span>pair token</span>
+          <input id="f-pair" autocomplete="off"></label>
+        <div class="f"><span>entry point</span>
+          <div class="radios">
+            <label class="chk"><input type="radio" name="f-entry" value="factory" checked>
+              factory, no buy</label>
+            <label class="chk"><input type="radio" name="f-entry" value="router">
+              router, launch and buy</label>
+          </div>
+        </div>
+        <label class="f"><span>initial buy (quote)</span>
+          <input id="f-buy" type="number" min="0" step="0.001" value="0"></label>
+        <label class="f"><span>slippage bps <b class="bps" id="f-slip-pct">5%</b></span>
+          <input id="f-slip" type="number" min="0" step="10" value="500"></label>
+        <label class="f"><span>buy recipient</span>
+          <input id="f-buyer" autocomplete="off" placeholder="0x..."></label>
+        <label class="f"><span>salt (blank = generated)</span>
+          <input id="f-salt" autocomplete="off" placeholder="blank = server generated"></label>
+      </div>
+      <div class="inline mt3">
+        <label class="chk"><input type="checkbox" id="f-buyback"> buyback enabled</label>
+        <span class="hint" id="f-recipient-hint">connect a wallet, or pick a stored key above, to fill the creator fee recipient</span>
+      </div>
+      <div class="hint mt2" id="f-buy-hint">
+        the factory's launchToken takes the launch fee as its whole value, so what
+        this builds is a launch with no buy. the entry point toggle above switches
+        to the router, which carries the fee and the buy in one transaction.
+      </div>
+    </div>
+
+    <div class="box">
+      <h2>extra fields</h2>
+      <div id="c-extra"></div>
+      <button class="ghost mt1" id="c-extra-add">+ add field</button>
+      <div class="hint mt2">any label / value pair, for example a website mirror</div>
+    </div>
+
+    <div class="box">
+      <h2>notes</h2>
+      <textarea id="f-notes" placeholder="private notes, never sent on chain"></textarea>
+    </div>
+
+    <div class="box" id="c-cost">
+      <h2>launch cost and economics</h2>
+      <div class="hint">reading /api/launch/config and /api/launch/preview</div>
+    </div>
+
+    <div class="box">
+      <div class="inline">
+        <button class="b-p lg" id="c-save">Save draft</button>
+        <button class="lg" id="c-json">Copy JSON</button>
+        <button class="b-d lg" id="c-launch">Launch from wallet</button>
+        <span class="grow"></span>
+        <button class="ghost" id="c-delete" disabled
+                title="delete this saved plan">Delete</button>
+        <span class="badge" id="c-status">-</span>
+        <span class="badge" id="c-id">unsaved</span>
+      </div>
+      <div id="c-msg" class="mt3"></div>
+    </div>
+
+    <div class="box cfm" id="c-confirm" hidden>
+      <h2>confirm launch - this spends real money on mainnet</h2>
+      <div id="c-confirm-body"></div>
+      <div class="inline mt3">
+        <button class="b-d lg" id="c-send">Confirm and send</button>
+        <button class="lg" id="c-cancel">Cancel</button>
+        <span class="hint">the second click sends it through your wallet, nothing is sent before</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- --------------------------------------------------------------- wallet -->
+<!-- ------------------------------------------------------------------ create -->
+<!-- A launch from scratch: no source token, nothing inherited, and a logo of
+     your own instead of one somebody else already used. The form below is not
+     a second form - it is the same #c-form-wrap the Copy tab uses, moved here
+     while this tab is open, so there is one set of fields, one confirm dialog
+     and one send button whichever way the launch was started. What this panel
+     adds is the control Copy has no use for. -->
+<section id="p-create" data-panel="create" role="tabpanel" aria-label="Create" hidden>
+  <div class="box">
+    <h2>logo</h2>
+    <div class="drop" id="cr-drop" tabindex="0" role="button"
+         aria-label="attach a logo image">
+      <img id="cr-shot" alt="" hidden>
+      <div class="drop-in" id="cr-drop-in">
+        <b>drop an image here, or click to choose one</b>
+        <span class="hint">png, jpeg, gif, webp or bmp, up to 8 MB</span>
+      </div>
+    </div>
+    <input type="file" id="cr-file" accept="image/*" hidden>
+    <div class="inline mt3">
+      <button id="cr-up" disabled>upload and use as logo</button>
+      <button class="ghost" id="cr-clear" disabled>clear</button>
+      <span class="grow"></span>
+      <span class="badge" id="cr-state">no image</span>
+    </div>
+    <div id="cr-msg" class="mt3"></div>
+    <div class="hint mt2">
+      nothing is uploaded until the button above is pressed, and what it does then
+      is real: the file is pinned to ipfs, which is what most of the tokens on
+      this chain already use for their logo, and the form above gets an
+      <b>ipfs://</b> uri back rather than a link to one server. a cid is held by
+      every node that has the file, so the logo does not depend on this machine,
+      on the pinning account, or on any one gateway staying up.
+      it is still public and still cannot be taken back: anybody holding the uri
+      can read the image, and it is the uri the token will carry for the rest of
+      its life. the file is re-encoded to png on this machine before it is sent,
+      so exif and gps never leave it, and a gif is passed through unchanged so it
+      keeps animating. no key, address or wallet data goes with it.
+    </div>
+  </div>
+
+  <div id="cr-form"></div>
+</section>
+
+<section id="p-wallet" data-panel="wallet" role="tabpanel" aria-label="Wallet" hidden>
+  <div class="box">
+    <h2>wallet</h2>
+    <div class="inline" id="w-noconn">
+      <button class="b-p lg" id="w-connect">Connect wallet</button>
+      <span class="hint" id="w-note">browser wallets and WalletConnect. no key here and no
+        signing here - the page only ever builds calldata for your own wallet to sign.
+        private keys live on the Wallets tab, on this machine's server</span>
+    </div>
+    <div id="w-conn" hidden>
+      <div class="inline">
+        <span class="mono cp" id="w-addr" data-copy="" title="click to copy">-</span>
+        <span class="badge" id="w-chain">chain -</span>
+        <button class="ghost" id="w-switch" hidden>switch to Robinhood Chain</button>
+        <span class="grow"></span>
+        <button class="ghost" id="w-view-clear" hidden>back to my wallet</button>
+        <button class="ghost" id="w-disconnect">disconnect</button>
+      </div>
+    </div>
+    <div id="w-msg" class="mt3"></div>
+  </div>
+
+  <div class="hero" id="w-summary"></div>
+
+  <div class="box">
+    <h2 id="w-launched-h">deployed tokens</h2>
+    <div class="tw">
+      <table>
+        <thead><tr>
+          <th>Token</th><th style="width:74px">Age</th><th style="width:98px">MCap USD</th>
+          <th style="width:118px">Graduation</th><th style="width:78px">Snipe</th>
+          <th style="width:96px">Volume</th><th style="width:60px"></th>
+        </tr></thead>
+        <tbody id="w-launched"></tbody>
+      </table>
+    </div>
+    <div class="empty" id="w-launched-empty" hidden>no launches from this wallet</div>
+  </div>
+
+  <div class="box">
+    <h2>early buys</h2>
+    <div class="tw">
+      <table>
+        <thead><tr>
+          <th>Token</th><th style="width:74px">Age</th><th style="width:110px">First buy</th>
+          <th style="width:80px">Delta</th><th style="width:88px">Snipe</th>
+          <th style="width:60px"></th>
+        </tr></thead>
+        <tbody id="w-early"></tbody>
+      </table>
+    </div>
+    <div class="empty" id="w-early-empty" hidden>no early buys indexed</div>
+  </div>
+
+  <div class="box">
+    <h2>watchlist - wallets you suspect of sniping</h2>
+    <div class="inline">
+      <input id="wl-addr" placeholder="0x address" class="w-addr" autocomplete="off"
+             aria-label="wallet address to watch">
+      <input id="wl-label" placeholder="label (optional)" class="w-label" autocomplete="off"
+             aria-label="label for this wallet">
+      <button class="b-p" id="wl-add">add</button>
+      <span class="grow"></span>
+      <button class="ghost" id="wl-refresh">refresh</button>
+    </div>
+    <div id="wl-list" class="mt3"></div>
+  </div>
+</section>
+
+<section id="p-wallets" data-panel="wallets" role="tabpanel" aria-label="Wallets" hidden>
+  <div class="box">
+    <h2>the vault</h2>
+    <div class="inline">
+      <input id="kv-pass" class="w-key" type="password" placeholder="passphrase"
+             autocomplete="off" spellcheck="false" aria-label="vault passphrase">
+      <input id="kv-pass2" class="w-key" type="password" placeholder="the same passphrase again"
+             autocomplete="off" spellcheck="false" aria-label="repeat the passphrase" hidden>
+      <button class="b-p" id="kv-unlock">unlock</button>
+      <button class="ghost" id="kv-lock" hidden>lock</button>
+      <span class="grow"></span>
+      <span class="badge" id="kv-state">locked</span>
+    </div>
+    <div class="warnbox mt2" id="kv-setup" hidden>there is no reset and no recovery: the
+      passphrase is not stored on this machine or anywhere else, so a typo here locks away
+      every key added under it. write it down first, and use a few words rather than one -
+      a short passphrase is the cheapest way into the file.</div>
+    <div class="hint mt2">keys are encrypted with this passphrase before they are stored, so
+      data/pons.db, its log, and every copy of this folder are useless without it. the
+      passphrase is held in the server's memory and nowhere else: it is not written down, no
+      endpoint returns it, and it is gone on restart or when you press lock. while the vault
+      is open, anything running as you on this machine can read the keys it holds.</div>
+    <div id="kv-msg" class="mt3"></div>
+  </div>
+
+  <div class="box">
+    <h2>add a wallet</h2>
+    <div class="inline">
+      <input id="ka-key" class="w-key" type="password" placeholder="private key, 0x..."
+             autocomplete="off" spellcheck="false" aria-label="private key">
+      <input id="ka-label" class="w-label" placeholder="label (optional)"
+             autocomplete="off" aria-label="label for this wallet">
+      <button class="b-p" id="ka-add">add</button>
+      <span class="grow"></span>
+      <button class="ghost" id="kw-refresh">refresh</button>
+    </div>
+    <div class="hint mt2">the address is derived from the key here, and the key is encrypted
+      with the vault passphrase before it is stored: it is read back only when you press
+      show, and only while the vault is open. nothing else on this page accepts one.</div>
+    <div id="ka-msg" class="mt3"></div>
+  </div>
+
+  <div class="box">
+    <h2>saved wallets</h2>
+    <div class="tw">
+      <table>
+        <thead><tr>
+          <th>Wallet</th>
+          <th style="width:52px" title="the key a launch from this page is signed with">signs</th>
+          <th style="width:150px">Robinhood ETH</th>
+          <th style="width:150px">Arbitrum ETH</th>
+          <th style="width:84px">Launched</th>
+          <th style="width:92px">Early buys</th>
+          <th style="width:200px">Key</th>
+          <th style="width:104px"></th>
+        </tr></thead>
+        <tbody id="kw-list"></tbody>
+      </table>
+    </div>
+    <div class="mt2" id="kw-chain"></div>
+    <div class="empty" id="kw-empty" hidden>no wallets saved yet</div>
+  </div>
+
+  <div class="box" id="kw-det-box" hidden>
+    <h2 id="kw-det-h">wallet</h2>
+    <div id="kw-det"></div>
+  </div>
+
+  <div class="box">
+    <h2>transfer all</h2>
+    <div class="inline">
+      <label class="chk">from
+        <select id="br-src" aria-label="the wallet the money comes from"></select></label>
+      <label class="chk">to
+        <select id="br-dest" aria-label="the wallet the money goes to"></select></label>
+      <button class="b-p" id="br-plan">plan</button>
+      <button class="b-d" id="br-start" disabled>start</button>
+      <span class="grow"></span>
+      <span class="badge" id="br-badge">-</span>
+    </div>
+    <div class="hint mt2" id="br-route"></div>
+    <div id="br-steps" class="mt3"></div>
+    <div id="br-msg" class="mt3"></div>
+  </div>
+</section>
+
+<!-- ------------------------------------------------------------ one sniper -->
+<!-- Opened with an address and nothing else, so it has no search box of its
+     own. The whole point of the tab is that the numbers at the top and the
+     table under them are the same set of launches: a wallet's snipes are its
+     own, so unlike every other panel here there is no window and no filter
+     that could make the two disagree. The list runs to thousands of rows, so
+     it pages by scrolling rather than by a cap.
+
+     It belongs inside `main` with every other panel: the page gutter and the
+     1400px measure are the element's, and a panel placed after `</main>` gets
+     neither, so this tab rendered edge to edge with its labels clipped at the
+     left of the window and its thirteen columns running off the right. -->
+<section id="p-sniper" data-panel="sniper" role="tabpanel" aria-label="Sniper" hidden>
+  <div class="hero" id="sp-head"></div>
+  <div class="hint mt2" id="sp-who"></div>
+
+  <div class="hero cstat" id="sp-crit"></div>
+  <div class="hint" id="sp-note"></div>
+
+  <div class="hint" id="sp-chain"></div>
+  <div class="hint" id="sp-x"></div>
+
+  <div class="ctl">
+    <select id="sp-sort" aria-label="sort this list by">
+      <option value="" selected>newest launch</option>
+      <option value="delta_asc">lag, smallest</option>
+      <option value="delta_desc">lag, largest</option>
+      <option value="quote_desc">spent, most</option>
+      <option value="quote_asc">spent, least</option>
+      <option value="deployer_launches_desc">deployer's launches, most</option>
+      <option value="deployer_nonce_desc">deployer's txns, most</option>
+      <option value="followers_desc">claimed followers, most</option>
+      <option value="followers_asc">claimed followers, fewest</option>
+      <option value="block_asc">oldest launch</option>
+    </select>
+    <select id="sp-sort2" aria-label="then sort by">
+      <option value="" selected>then nothing</option>
+      <option value="delta_asc">lag, smallest</option>
+      <option value="quote_desc">spent, most</option>
+      <option value="quote_asc">spent, least</option>
+      <option value="followers_desc">claimed followers, most</option>
+      <option value="deployer_launches_desc">deployer's launches, most</option>
+    </select>
+    <!-- The races he lost are a separate set and are never mixed into a median.
+         The box adds them to the table in another colour; the numbers above stay
+         computed over the snipes. -->
+    <label class="chk"><input type="checkbox" id="sp-lost">
+      show the races he lost</label>
+    <button id="sp-all" class="dim" title="load every row, not just the first hundred">show all</button>
+    <button id="sp-xwalk" class="dim" title="look up the X profiles for the handles this wallet's tokens claim">X profiles</button>
+    <button id="sp-cwalk" class="dim" title="read deployer nonces and balances from chain">Chain</button>
+    <span class="grow"></span>
+    <span class="badge" id="sp-prog">-</span>
+    <span class="badge" id="sp-xprog" hidden></span>
+    <span class="badge" id="sp-cprog" hidden></span>
+  </div>
+  <div id="sp-msg" class="mt2"></div>
+  <div class="hint" id="sp-lostnote" hidden></div>
+
+  <div class="tw" id="sp-wrap" hidden>
+    <table>
+      <thead>
+        <tr>
+          <th class="num">#</th>
+          <th>Token</th>
+          <th style="width:74px">Age</th>
+          <th style="width:60px">Lag</th>
+          <th style="width:86px">Spent</th>
+          <th style="width:98px">Result</th>
+          <th style="width:74px">Deployer</th>
+          <th style="width:86px">Its launches</th>
+          <!-- One column per chain, and they disagree: the same deployer has a
+               different transaction count on each, and a wallet with hundreds of
+               sends on Ethereum and none on Robinhood is a different animal from
+               one with none anywhere. "Txns RH" is the chain this indexer reads
+               itself; the other two are separate calls to separate nodes and are
+               labelled with the chain they came from.
+               These three are the browser's half of SW_EXT_CHAINS in config.py -
+               SP_EXT_CHAINS in sniper.js draws the cells in this order, so a
+               chain added on the server needs a column added here too. -->
+          <th style="width:76px">Txns RH</th>
+          <th style="width:76px">Txns ETH</th>
+          <th style="width:76px">Txns ARB</th>
+          <th style="width:96px">Its balance</th>
+          <th style="width:190px">Claimed X</th>
+          <th style="width:92px">Followers</th>
+        </tr>
+      </thead>
+      <tbody id="sp-tb"></tbody>
+    </table>
+  </div>
+  <div id="sp-sent" class="fsent" hidden></div>
+  <div class="empty" id="sp-empty" hidden>no snipes to show</div>
+</section>
+
+
+<!-- The shortcuts, stated where the page already explains itself. The number
+     keys are on the tabs above; "/" puts the cursor in the active tab's own
+     search box and "r" re-reads the panel. -->
+<div id="foot"></div>
+</main>
+
+<!-- ---------------------------------------------------------- wallet picker -->
+<!-- The dialog the status bar opens. Its body is rendered whole on every change,
+     the way the coin card body is, so this is a shell and nothing else. -->
+<div id="wmodal" class="wwrap" hidden>
+  <div class="wcard" id="wmodal-card" role="dialog" aria-modal="true"
+       aria-label="connect a wallet" tabindex="-1">
+    <div class="whd">
+      <h2>connect a wallet</h2>
+      <span class="grow"></span>
+      <button class="wclose" id="wmodal-x" title="close (esc)">close</button>
+    </div>
+    <div class="wbody" id="wmodal-body"></div>
+  </div>
+</div>
+
+<!-- ------------------------------------------------------------- coin card -->
+<!-- one overlay shared by every table; the tab under it never changes -->
+<div id="coin" class="cwrap" hidden>
+  <div class="ccard" id="coin-card" role="dialog" aria-modal="true"
+       aria-label="coin card" tabindex="-1">
+    <div id="coin-body"></div>
+  </div>
+</div>
+
+<div id="toast" role="status" aria-live="polite"></div>
+
+<!-- Classic scripts, in order, deferred. They share one top-level scope the
+     way the single inline block did, so the split changed where the code
+     lives and nothing about how it runs. -->
+<script defer src="/static/js/fmt.js"></script>
+<script defer src="/static/js/ui.js"></script>
+<script defer src="/static/js/cells.js"></script>
+<script defer src="/static/js/router.js"></script>
+<script defer src="/static/js/launches.js"></script>
+<script defer src="/static/js/volume.js"></script>
+<script defer src="/static/js/sniped.js"></script>
+<script defer src="/static/js/snipers.js"></script>
+<script defer src="/static/js/sniper.js"></script>
+<script defer src="/static/js/handles.js"></script>
+<script defer src="/static/js/copy.js"></script>
+<script defer src="/static/js/create.js"></script>
+<script defer src="/static/js/wallet.js"></script>
+<script defer src="/static/js/wallets.js"></script>
+<script defer src="/static/js/coin.js"></script>
+<script defer src="/static/js/keys.js"></script>
+<script defer src="/static/js/boot.js"></script>
+</body>
+</html>
