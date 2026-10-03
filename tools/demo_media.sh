@@ -1,10 +1,13 @@
 #!/usr/bin/env bash
 # The demo GIF and the demo video, cut from the stills in docs/shots/.
 #
-#     python tools/seed_demo.py     # the synthetic database
 #     python server.py              # http://127.0.0.1:8787
 #     bash tools/demo_shots.sh      # writes docs/shots/*.png
 #     bash tools/demo_media.sh      # writes docs/demo.gif and docs/demo.mp4
+#
+# This half does not care which base the stills came from - against a live index
+# or against the seeded demo, eleven PNGs are eleven PNGs. The choice is made
+# once, in demo_shots.sh.
 #
 # The order is defined here rather than taken from the directory listing, so
 # the tour reads as one pass through the product: the board, one token opened,

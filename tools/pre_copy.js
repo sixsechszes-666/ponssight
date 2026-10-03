@@ -1,23 +1,31 @@
 /* Setup for the Copy screenshot.
 
-   The tab opens on the source picker, and the picker is a list of every token
-   in the index - a picture of a list, not of what the tab does. Pressing
-   `start blank` is the documented way into the plan form without a source, and
-   the form is the tab: what gets copied, how much is spent, the slippage, the
-   entry point, and the cost the factory will charge for it. The saved drafts
-   live under the picker, so the way to see both is the picker filtered down;
-   the form is what the tab is for and it is what this shoots.
+   The tab takes a source token as its route argument, exactly like the coin
+   card, so the URL already opens the plan form filled from that token: the
+   name, the symbol, the logo URI, the socials, the tax, all of it read off the
+   source. What the URL cannot do is wait, and this tab has two panels that
+   arrive late - the source line fills when `/api/token/<addr>` answers, and the
+   fee panel under the form fills when the factory has been read. Shot on the
+   default wait the picture is a form with "no source token" over it and
+   "reading launch config and preview..." where the cost belongs, which reads as
+   a tab whose fee lookup is broken rather than as one still working.
+
+   So this waits for both lines to settle and hands the frame over when they
+   have. It is not a click: nothing here is hidden behind a button.
 
    Passed to shot.js as `@tools/pre_copy.js`. */
 (async () => {
-  for (let i = 0; i < 40; i++) {
-    const b = document.getElementById("c-blank");
-    if (b) {
-      b.click();
-      return "start blank -> " + (document.getElementById("c-src").hidden
-        ? "form still hidden" : "form open");
+  // Both panels have to be there and neither may still say it is reading: an
+  // empty `#c-cost` is a panel that has not started, not one that has finished.
+  const settled = (v) => !!v && v.textContent.trim() !== "" && !/loading|reading/i.test(v.textContent);
+  for (let i = 0; i < 160; i++) {
+    const src = document.getElementById("c-src-v");
+    const cost = document.getElementById("c-cost");
+    if (settled(src) && settled(cost)) {
+      return "source and fees settled: " + src.textContent.trim();
     }
     await new Promise(r => setTimeout(r, 250));
   }
-  return "no start-blank button appeared";
+  const cost = document.getElementById("c-cost");
+  return "gave up waiting: " + (cost ? cost.textContent.slice(0, 60) : "no cost panel");
 })()
