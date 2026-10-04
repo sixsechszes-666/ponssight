@@ -1,0 +1,56 @@
+name: ci
+
+# The gate on every push, against the seeded demo database rather than an empty
+# one. The live checks at the end of the gate ask the running server for real
+# answers - a launch list with rows in it, a key list, a handle lookup - and an
+# empty database answers all of them with an empty table and a 200, so a check
+# run against one would pass while proving nothing.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: install
+        run: pip install -r requirements.txt
+
+      - name: build the demo database
+        run: python tools/seed_demo.py --force
+
+      # PONS_INDEX=0 is the point, not a shortcut: with the indexer on, the
+      # server starts walking the real chain behind the seed, and the checks
+      # stop being checks of a repository that ships code and a seeder.
+      - name: start the dashboard
+        run: |
+          PONS_INDEX=0 python server.py > server.log 2>&1 &
+          for i in $(seq 1 60); do
+            if curl -sf --noproxy '*' http://127.0.0.1:8787/api/stats > /dev/null; then
+              echo "dashboard up"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "the dashboard never answered on 8787" >&2
+          tail -40 server.log >&2
+          exit 1
+
+      - name: gate
+        run: python tools/gate.py
+
+      - name: server log
+        if: failure()
+        run: tail -60 server.log
