@@ -1,5 +1,10 @@
 # ponssight
 
+[![ci](https://github.com/sixsechszes-666/ponssight/actions/workflows/ci.yml/badge.svg)](https://github.com/sixsechszes-666/ponssight/actions/workflows/ci.yml)
+![Python](https://img.shields.io/badge/python-3.10%2B-3776AB?logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?logo=fastapi&logoColor=white)
+![Лицензия](https://img.shields.io/badge/license-MIT-3DA639)
+
 Локальный дашборд-зеркало лаунчпада [ponsfamily.com](https://www.ponsfamily.com/launchpad)
 на Robinhood Chain (chain id 4663). Читает чейн напрямую по JSON-RPC: лента
 запусков, объёмы, кто снайпит запуски и сколько на этом зарабатывает,
